@@ -19,8 +19,17 @@ DATA = {
 
 @pytest.fixture(autouse=True)
 def enable_fmi_integration(enable_custom_integrations):
-    """Ensure the staged custom integration overrides the built-in FMI domain."""
+    """Register the staged integration in the HA fixture's package search path."""
     _ = enable_custom_integrations
+    # The HA fixture plugin may import a different 'custom_components'
+    # package before pytest adds the staged checkout to its import path.
+    from pathlib import Path
+
+    import custom_components
+
+    staged_components = str(Path(__file__).resolve().parents[1] / "custom_components")
+    if staged_components not in custom_components.__path__:
+        custom_components.__path__.insert(0, staged_components)
 
 
 @pytest.fixture
