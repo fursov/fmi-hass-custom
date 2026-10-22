@@ -110,3 +110,29 @@ FMI step; future forecasts and sea-level forecasts do not masquerade as current
 measurements. Rain remains FMI precipitation intensity in mm/h and sea level
 remains cm. Home Assistant may convert native units based on the user settings
 and existing entity registry preferences.
+
+## FMI WFS XML and geocoding (PR6)
+
+Lightning and sea-level WFS requests now use genuine UTC `starttime=...Z`
+values, including around daylight-saving changes. Results are parsed using
+XML element local names rather than nested child numbers or fragile newline
+positions. WFS `ExceptionReport` responses (including HTTP 200) and HTTP
+errors mark the optional source unavailable without interrupting current
+weather. FMI `SeaLevelN2000` remains excluded for compatibility.
+
+Lightning coordinates and strike counts still populate the same sensor
+attributes. The distance uses a local great-circle calculation and does not
+require reverse geocoding. Nominatim addresses are optional; no more than
+one uncached location is looked up during a refresh, successful addresses
+are cached, and all integration instances enforce a 1.1-second request
+spacing. If geocoding is unavailable, the location string is the GPS
+latitude/longitude. This also avoids repeated requests to third parties.
+
+Displayed timestamps retain the original `YYYY-MM-DD HH:MM` format, now
+converted from FMI's UTC observations to the configured Home Assistant
+timezone. The best-time-of-day calculation uses whole local calendar
+dates, including year boundaries.
+
+The new XML fixtures are **synthetic WFS-shaped responses**, not recorded
+live FMI service output. Test against an actual FMI response and your HA
+timezone before merging this PR.

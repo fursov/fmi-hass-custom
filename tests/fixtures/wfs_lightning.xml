@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0"
+  xmlns:gml="http://www.opengis.net/gml/3.2"
+  xmlns:swe="http://www.opengis.net/swe/2.0">
+  <wfs:member>
+    <gml:MultiPointCoverage>
+      <gml:positions>
+        60.17 24.94 1792670400
+        60.27 24.94 1792671000
+        60.18 24.96 1792670700
+      </gml:positions>
+      <swe:doubleOrNilReasonTupleList>
+        1 5.2 0.1 2.0
+        2 -3.1 0.2 3.0
+        1 4.0 0.3 4.0
+      </swe:doubleOrNilReasonTupleList>
+    </gml:MultiPointCoverage>
+  </wfs:member>
+</wfs:FeatureCollection>

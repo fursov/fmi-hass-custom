@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs/2.0"
+  xmlns:fmi="http://xml.fmi.fi/schema/wfs/2.0">
+  <wfs:member><fmi:BsWfsElement>
+    <fmi:ParameterValue>23.5</fmi:ParameterValue>
+    <fmi:ParameterName>SeaLevel</fmi:ParameterName>
+    <fmi:Time>2026-10-22T12:30:00Z</fmi:Time>
+    <fmi:Location>Helsinki</fmi:Location>
+  </fmi:BsWfsElement></wfs:member>
+  <wfs:member><fmi:BsWfsElement>
+    <fmi:Time>2026-10-22T12:00:00Z</fmi:Time>
+    <fmi:ParameterName>SeaLevelN2000</fmi:ParameterName>
+    <fmi:ParameterValue>999</fmi:ParameterValue>
+  </fmi:BsWfsElement></wfs:member>
+  <wfs:member><fmi:BsWfsElement>
+    <fmi:Time>2026-10-22T12:00:00Z</fmi:Time>
+    <fmi:ParameterName>SeaLevel</fmi:ParameterName>
+    <fmi:ParameterValue>-4.75</fmi:ParameterValue>
+  </fmi:BsWfsElement></wfs:member>
+  <wfs:member><fmi:BsWfsElement>
+    <fmi:Time>2026-10-22T13:00:00Z</fmi:Time>
+    <fmi:ParameterName>SeaLevel</fmi:ParameterName>
+    <fmi:ParameterValue>NaN</fmi:ParameterValue>
+  </fmi:BsWfsElement></wfs:member>
+</wfs:FeatureCollection>
