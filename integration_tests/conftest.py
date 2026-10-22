@@ -1,15 +1,13 @@
 
 """Runtime Home Assistant integration-test fixtures (no FMI network access)."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
 from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 DOMAIN = "fmi"
 DATA = {
@@ -74,7 +72,7 @@ def mock_api():
     """
     from custom_components.fmi import FMIDataUpdateCoordinator
 
-    now = datetime.now(timezone.utc).replace(microsecond=0)
+    now = datetime.now(UTC).replace(microsecond=0)
     current = _observation(now)
     observation = _observation(now, temperature=8.0)
     point_a = _observation(now + timedelta(hours=1)).data

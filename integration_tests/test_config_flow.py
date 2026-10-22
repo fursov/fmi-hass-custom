@@ -1,7 +1,6 @@
 """Home Assistant config and options flow tests for a staged FMI integration."""
 
 import pytest
-
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.data_entry_flow import FlowResultType
 

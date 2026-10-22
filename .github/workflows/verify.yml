@@ -76,6 +76,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements-ha-test.txt
       - name: Install real Home Assistant test dependencies
         run: |
           python -m pip install --upgrade pip

@@ -3,7 +3,6 @@
 from unittest.mock import patch
 
 import pytest
-
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import entity_registry as er
 
@@ -145,7 +144,7 @@ async def test_station_outage_does_not_block_weather_entities(
 ):
     """An optional station outage is isolated from the main FMI coordinator."""
     mock_api.station.side_effect = OSError("synthetic station outage")
-    entry = await _setup(
+    await _setup(
         hass, make_entry, mock_api, options={"observation_station_id": 101}
     )
     registry = er.async_get(hass)
