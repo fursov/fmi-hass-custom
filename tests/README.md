@@ -9,7 +9,7 @@ HACS package layout or coupling the first refactor PR to a moving HA release.
 python -m pip install -r requirements-test.txt
 ruff check tests
 python -m compileall -q tests
-python -m pytest -q tests
+bash .github/scripts/run-offline-tests.sh
 ```
 
 What is pinned:
@@ -34,3 +34,8 @@ HA version and installable test package layout are established.
 Hassfest is run as an **advisory** job using a staged integration directory.
 Any findings there are tracked for the compatibility/manifest follow-up PR;
 this stage does not alter the published integration files.
+
+The runner invokes the tests from a temporary directory because recent pytest
+versions otherwise collect the repository-root `__init__.py` as a package and
+import the live FMI integration. `FMI_SOURCE_ROOT` points the tests back at
+the checked-out source files and fixtures. No production package is imported.

@@ -6,8 +6,7 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
-
-from tests.conftest import source_definition
+from conftest import source_definition
 
 FORECAST_KEYS = {
     "ATTR_FORECAST_TIME": "datetime",

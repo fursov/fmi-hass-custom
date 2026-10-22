@@ -7,11 +7,12 @@ Instead, tests execute selected unchanged definitions from the source AST.
 
 import ast
 import copy
+import os
 from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("FMI_SOURCE_ROOT", Path(__file__).resolve().parents[1]))
 
 
 def source_definition(filename, name, namespace=None, methods=None, base=None):

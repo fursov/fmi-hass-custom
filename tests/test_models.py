@@ -4,8 +4,7 @@ from datetime import datetime
 from xml.etree import ElementTree
 
 import pytest
-
-from tests.conftest import ROOT, source_definition
+from conftest import ROOT, source_definition
 
 
 def test_sea_level_model_preserves_order_and_converts_numeric_values():
