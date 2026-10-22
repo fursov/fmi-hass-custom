@@ -96,3 +96,17 @@ For hourly FMI sampling, daily precipitation is the sum of the available
 1-hour accumulation fields (mm). If the configured FMI timestep is greater
 than one hour, daily precipitation is unknown rather than extrapolated or
 incorrectly summed. A partly available day yields a partly available total.
+
+## Sensor entities (PR5)
+
+FMI sensors now use the Home Assistant `SensorEntity` API and
+`SensorEntityDescription` metadata. Names, unique IDs, attributes and options
+remain compatible with existing dashboards. Native sensor values preserve
+finite numbers including zero; missing/invalid numbers become unknown. Source
+or coordinator failures continue to appear as unavailable.
+
+Current-weather numeric sensors offer measurement statistics at the one-hour
+FMI step; future forecasts and sea-level forecasts do not masquerade as current
+measurements. Rain remains FMI precipitation intensity in mm/h and sea level
+remains cm. Home Assistant may convert native units based on the user settings
+and existing entity registry preferences.

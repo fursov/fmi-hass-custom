@@ -146,6 +146,9 @@ def test_sensor_entity_identity(display_name, expected_id):
                 ATTRIBUTION="Weather Data provided by FMI",
             ),
             "ha_const": SimpleNamespace(STATE_UNAVAILABLE="unavailable"),
+            "SENSOR_DESCRIPTIONS": {},
+            "_CURRENT_MEASUREMENTS": frozenset(),
+            "SensorStateClass": SimpleNamespace(MEASUREMENT="measurement"),
         },
     )
     Base.update = lambda self: None

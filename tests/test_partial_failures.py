@@ -371,6 +371,7 @@ def test_only_dependent_sensors_become_unavailable():
         get_forecasts=list,
         lightning_data=None,
         mareo_data=None,
+        best_time=datetime.now(UTC),
     )
     WeatherSensor = _sensor_property("FMIBestConditionSensor")
     best = WeatherSensor()
@@ -381,6 +382,9 @@ def test_only_dependent_sensors_become_unavailable():
     assert best.available
     best.type = 2
     assert best.available
+    c.best_time = None
+    assert not best.available
+    c.best_time = datetime.now(UTC)
 
     lightning = _sensor_property("FMILightningStrikesSensor")()
     lightning.coordinator = c

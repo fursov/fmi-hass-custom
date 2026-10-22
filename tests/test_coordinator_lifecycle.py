@@ -241,6 +241,9 @@ def _sensor_entity_class():
                 ATTRIBUTION="Weather Data provided by FMI",
             ),
             "ha_const": SimpleNamespace(STATE_UNAVAILABLE="unavailable"),
+            "SENSOR_DESCRIPTIONS": {},
+            "_CURRENT_MEASUREMENTS": frozenset(),
+            "SensorStateClass": SimpleNamespace(MEASUREMENT="measurement"),
             "ha_core": SimpleNamespace(callback=lambda function: function),
         },
     )
