@@ -69,6 +69,37 @@ def _nearest_midday(entries):
     )
 
 
+
+def _daily(entries, get_condition, hourly_precipitation):
+    """Aggregate one local-calendar-day group."""
+    temperatures = [
+        _value(slot, "temperature") for slot, _ in entries
+    ]
+    temperatures = [temp for temp in temperatures if temp is not None]
+    sample, local_time = _nearest_midday(entries)
+    summary = _hourly(sample, local_time, get_condition)
+
+    precipitation = None
+    if hourly_precipitation:
+        amounts = [
+            _value(slot, "precipitation_amount") for slot, _ in entries
+        ]
+        amounts = [amount for amount in amounts if amount is not None]
+        if amounts:
+            precipitation = sum(amounts)
+
+    midnight = local_time.replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    summary.update({
+        "datetime": midnight.isoformat(),
+        "native_temperature": max(temperatures) if temperatures else None,
+        "native_templow": min(temperatures) if temperatures else None,
+        "native_precipitation": precipitation,
+    })
+    return summary
+
+
 def build_forecast(
     points,
     *,
@@ -106,30 +137,7 @@ def build_forecast(
         local_time = to_local(slot.time)
         groups[local_time.date()].append((slot, local_time))
 
-    results = []
-    for entries in groups.values():
-        values = [_value(slot, "temperature") for slot, _ in entries]
-        temps = [value for value in values if value is not None]
-        sample, local_time = _nearest_midday(entries)
-        representative = _hourly(sample, local_time, get_condition)
-
-        precipitation = None
-        if hourly_precipitation:
-            amounts = [
-                _value(slot, "precipitation_amount") for slot, _ in entries
-            ]
-            known = [amount for amount in amounts if amount is not None]
-            if known:
-                precipitation = sum(known)
-
-        midnight = local_time.replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        representative.update({
-            "datetime": midnight.isoformat(),
-            "native_temperature": max(temps) if temps else None,
-            "native_templow": min(temps) if temps else None,
-            "native_precipitation": precipitation,
-        })
-        results.append(representative)
-    return results
+    return [
+        _daily(entries, get_condition, hourly_precipitation)
+        for entries in groups.values()
+    ]
