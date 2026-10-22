@@ -39,3 +39,13 @@ The runner invokes the tests from a temporary directory because recent pytest
 versions otherwise collect the repository-root `__init__.py` as a package and
 import the live FMI integration. `FMI_SOURCE_ROOT` points the tests back at
 the checked-out source files and fixtures. No production package is imported.
+
+## PR2: coordinator lifecycle characterization
+
+`test_coordinator_lifecycle.py` verifies one publication per completed FMI
+refresh, no manual `async_set_updated_data` calls during polling, and one
+managed listener per entity while it is registered in Home Assistant. It also
+checks observation/forecast coordinator isolation and failure behavior.
+
+These tests use a small stand-in for Home Assistant's coordinator/entity
+lifecycle and do **not** replace full Home Assistant integration tests.

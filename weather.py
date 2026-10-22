@@ -95,15 +95,14 @@ class FMIWeatherEntity(CoordinatorEntity, WeatherEntity):
         }
         self._attr_should_poll = False
         self._attr_attribution = const.ATTRIBUTION
-        # update initial values
+        # Initialize attributes. CoordinatorEntity manages listener lifetime.
         self.update_callback()
-        # register the update callback
-        coordinator.async_add_listener(self.update_callback)
 
     @ha_core.callback
     def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self.async_write_ha_state()
+        """Refresh weather attributes before the coordinator publishes state."""
+        self.update_callback()
+        super()._handle_coordinator_update()
 
     def update_callback(self, *_, **__):
         """Update the entity attributes."""

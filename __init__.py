@@ -509,8 +509,9 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
         except (TimeoutError, UpdateFailed) as error:
             raise UpdateFailed(error) from error
 
-        self.async_set_updated_data({"current": self.current})
-        return {}
+        # Returning data lets DataUpdateCoordinator publish one completed refresh.
+        # Do not notify listeners manually from inside _async_update_data().
+        return {"current": self.current}
 
 
 class FMIObservationUpdateCoordinator(FMIDataUpdateCoordinator):
@@ -548,4 +549,4 @@ class FMIObservationUpdateCoordinator(FMIDataUpdateCoordinator):
                 await self._fetch_observation()
         except (TimeoutError, UpdateFailed) as error:
             raise UpdateFailed(error) from error
-        return {}
+        return {"observation": self.observation}
