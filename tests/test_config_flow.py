@@ -380,7 +380,7 @@ def test_manifest_tracks_owned_docs_and_direct_dependencies():
     )
     assert "@fursov" in manifest["codeowners"]
     assert "fmi-weather-client==0.7.0" in manifest["requirements"]
-    assert "requests>=2.32.4" in manifest["requirements"]
+    assert not any(item.startswith("requests") for item in manifest["requirements"])
 
 
 def test_strings_and_all_translations_cover_the_same_flow_keys():

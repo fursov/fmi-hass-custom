@@ -152,8 +152,9 @@ Home Assistant's built-in `config_entry` property and retains the existing
 reload-on-change behavior.
 
 Configuration forms and all 14 option labels are available in English,
-Finnish and Russian. Documentation, maintainer, issue tracker and direct
-Python runtime dependencies are identified in the integration manifest.
+Finnish and Russian. Documentation, maintainer, issue tracker and third-party runtime dependencies
+are identified in the integration manifest (Home Assistant core libraries are
+not duplicated). Hassfest validation is now a blocking CI check.
 The version remains `0.6.2` until the release PR.
 
 The minimal supported Home Assistant version is not declared in this PR:
