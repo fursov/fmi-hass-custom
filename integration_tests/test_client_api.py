@@ -6,11 +6,10 @@ detect renamed third-party exports or changed call signatures by themselves.
 
 import inspect
 from datetime import UTC, datetime, timedelta
-
-import pytest
 from importlib.metadata import version
 
 import fmi_weather_client as fmi
+import pytest
 from fmi_weather_client import errors, models
 
 EXPECTED_VERSION = "1.0.0"
