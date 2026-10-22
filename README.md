@@ -77,3 +77,22 @@ entity remains unavailable until the station recovers. Observations older than
 The source freshness thresholds are conservative safety defaults and may be
 revisited based on real FMI update behavior. No entity IDs or option keys have
 changed. Full Home Assistant runtime coverage remains a follow-up item.
+
+## Weather forecasts (PR4)
+
+Both hourly and daily forecasts are available via the Home Assistant
+`weather.get_forecasts` action on the main weather entity. For backward
+compatibility, the optional `weather.*_daily` entity is retained; the type
+requested by `get_forecasts` takes precedence over that entity's legacy mode.
+The station observation entity does not advertise forecasts.
+
+All forecast timestamps use the Home Assistant configured local timezone.
+Daily forecasts start at local midnight (including DST transitions); high/low
+temperatures ignore missing or invalid values, and the daily condition is
+represented by the sample closest to local noon. Hourly forecasts keep native
+units and FMI's original sample cadence without interpolating missing hours.
+
+For hourly FMI sampling, daily precipitation is the sum of the available
+1-hour accumulation fields (mm). If the configured FMI timestep is greater
+than one hour, daily precipitation is unknown rather than extrapolated or
+incorrectly summed. A partly available day yields a partly available total.

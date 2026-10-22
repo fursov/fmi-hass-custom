@@ -112,6 +112,7 @@ def test_weather_entity_identity(
             "FMIDataUpdateCoordinator": FakeCoordinator,
             "const": const,
             "DeviceEntryType": SimpleNamespace(SERVICE="service"),
+            "WeatherEntityFeature": int,
         },
     )
     Weather.update_callback = lambda self: None

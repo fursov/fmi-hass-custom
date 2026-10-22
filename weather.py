@@ -2,31 +2,18 @@
 import math
 from dateutil import tz
 
-from homeassistant.components.weather import (
-    ATTR_FORECAST_CONDITION,
-    ATTR_FORECAST_NATIVE_PRECIPITATION,
-    ATTR_FORECAST_NATIVE_TEMP,
-    ATTR_FORECAST_TIME,
-    ATTR_FORECAST_WIND_BEARING,
-    ATTR_FORECAST_NATIVE_WIND_SPEED,
-    ATTR_FORECAST_NATIVE_TEMP_LOW,
-    ATTR_FORECAST_CLOUD_COVERAGE,
-    WeatherEntity,
-    Forecast,
-)
-from homeassistant.components.weather.const import (
-    ATTR_WEATHER_HUMIDITY,
-    ATTR_WEATHER_PRESSURE,
-    WeatherEntityFeature,
-)
+from homeassistant.components.weather import Forecast, WeatherEntity
+from homeassistant.components.weather.const import WeatherEntityFeature
 from homeassistant.const import CONF_NAME
 import homeassistant.core as ha_core
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from . import FMIDataUpdateCoordinator
 from . import const
 from . import utils
+from .forecast import build_forecast
 
 
 PARALLEL_UPDATES = 1
@@ -73,6 +60,10 @@ class FMIWeatherEntity(CoordinatorEntity, WeatherEntity):
         super().__init__(coordinator)
         self._daily_mode = daily_mode
         self._observation_mode = station_id
+        if station_id:
+            # A station observation has no forecast coordinator or forecast data.
+            self._attr_supported_features = WeatherEntityFeature(0)
+        self._attr_native_precipitation_unit = "mm"
         self._data_func = coordinator.get_observation if station_id else coordinator.get_weather
         _weather = self._data_func()
         _attr_name = [_weather.place if _weather else name]
@@ -103,6 +94,12 @@ class FMIWeatherEntity(CoordinatorEntity, WeatherEntity):
         """Refresh weather attributes before the coordinator publishes state."""
         self.update_callback()
         super()._handle_coordinator_update()
+        if not self._observation_mode:
+            # Weather forecast websocket subscribers are separate from state
+            # listeners; notify them after the coordinator has published data.
+            self.hass.async_create_task(
+                self.async_update_listeners(("hourly", "daily"))
+            )
 
     def update_callback(self, *_, **__):
         """Update the entity attributes."""
@@ -148,44 +145,15 @@ class FMIWeatherEntity(CoordinatorEntity, WeatherEntity):
             return None
         return value.unit
 
-    def _forecast(self, daily_mode: bool) -> list[Forecast] | None:
-        """Return the forecasts."""
-
-        _fmi: FMIDataUpdateCoordinator = self.coordinator
-        _forecasts = _fmi.get_forecasts()
-        _data = []
-        _get_val = self.__get_value
-
-        _item = {}
-        _current_day = 0
-
-        for forecast in _forecasts:
-            _time = forecast.time.astimezone(tz.tzlocal())
-            _temperature = _get_val(forecast, "temperature")
-            if not daily_mode or _current_day != _time.day:
-                # add a new day
-                _current_day = _time.day
-                _item = {
-                    ATTR_FORECAST_TIME: _time.isoformat(),
-                    ATTR_FORECAST_CONDITION: utils.get_weather_symbol(forecast.symbol.value),
-                    ATTR_FORECAST_NATIVE_TEMP: _temperature,
-                    ATTR_FORECAST_NATIVE_TEMP_LOW: _temperature if daily_mode else None,
-                    ATTR_FORECAST_NATIVE_PRECIPITATION: _get_val(forecast, "precipitation_amount"),
-                    ATTR_FORECAST_NATIVE_WIND_SPEED: _get_val(forecast, "wind_speed"),
-                    ATTR_FORECAST_WIND_BEARING: _get_val(forecast, "wind_direction"),
-                    ATTR_WEATHER_PRESSURE: _get_val(forecast, "pressure"),
-                    ATTR_WEATHER_HUMIDITY: _get_val(forecast, "humidity"),
-                    ATTR_FORECAST_CLOUD_COVERAGE: _get_val(forecast, "cloud_cover"),
-                }
-                _data.append(_item)
-
-            else:
-                # update daily high and low temperature values
-                if _item[ATTR_FORECAST_NATIVE_TEMP] < _temperature:
-                    _item[ATTR_FORECAST_NATIVE_TEMP] = _temperature
-                if _item[ATTR_FORECAST_NATIVE_TEMP_LOW] > _temperature:
-                    _item[ATTR_FORECAST_NATIVE_TEMP_LOW] = _temperature
-        return _data
+    def _forecast(self, daily_mode: bool) -> list[Forecast]:
+        """Return sorted, validated forecasts in HA native units."""
+        return build_forecast(
+            self.coordinator.get_forecasts(),
+            daily=daily_mode,
+            to_local=dt_util.as_local,
+            get_condition=utils.get_weather_symbol,
+            hourly_precipitation=getattr(self.coordinator, "time_step", 1) == 1,
+        )
 
     @property
     def forecast(self) -> list[Forecast] | None:
@@ -194,7 +162,7 @@ class FMIWeatherEntity(CoordinatorEntity, WeatherEntity):
 
     async def async_forecast_hourly(self) -> list[Forecast] | None:
         """Return the hourly forecast in native units."""
-        return self._forecast(daily_mode=self._daily_mode)
+        return self._forecast(daily_mode=False)
 
     async def async_forecast_twice_daily(self) -> list[Forecast] | None:
         """Return the daily forecast in native units."""
