@@ -7,12 +7,12 @@ from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
 import pytest
-from conftest import ROOT, source_definition
+from conftest import ROOT, SOURCE_ROOT, source_definition
 
 
 def _wfs():
     """Import the pure XML helper without Home Assistant or network access."""
-    spec = importlib.util.spec_from_file_location("fmi_wfs_tests", ROOT / "wfs.py")
+    spec = importlib.util.spec_from_file_location("fmi_wfs_tests", SOURCE_ROOT / "wfs.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

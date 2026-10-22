@@ -5,7 +5,7 @@ import logging
 from types import SimpleNamespace
 
 import pytest
-from conftest import ROOT, source_definition
+from conftest import ROOT, SOURCE_ROOT, source_definition
 
 
 class DummyCoordinatorEntity:
@@ -34,7 +34,7 @@ class FakeCoordinator:
 
 def _legacy_constants():
     """Read public string keys without importing Home Assistant."""
-    tree = ast.parse((ROOT / "const.py").read_text(encoding="utf-8"))
+    tree = ast.parse((SOURCE_ROOT / "const.py").read_text(encoding="utf-8"))
     values = {}
     for node in tree.body:
         if isinstance(node, ast.Assign):

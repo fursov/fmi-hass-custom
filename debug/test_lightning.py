@@ -9,11 +9,10 @@ import requests
 from geopy.distance import geodesic
 from geopy.geocoders import Nominatim
 
-# Add parent to sys path for project file imports
+# Add repository root to sys.path for custom_components.fmi imports
 sys.path.append(os.path.abspath(os.path.join(sys.path[0], "..")))
 
-import const  # noqa: E402
-import utils  # noqa: E402
+from custom_components.fmi import const, utils  # noqa: E402
 
 
 _LOGGER = logging.getLogger(__package__)

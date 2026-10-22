@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
-from conftest import ROOT, source_definition
+from conftest import ROOT, SOURCE_ROOT, source_definition
 
 
 class FakeCoordinatorEntity:
@@ -58,7 +58,7 @@ def _metadata():
         "_CURRENT_MEASUREMENTS",
         "SENSOR_DESCRIPTIONS",
     }
-    tree = ast.parse((ROOT / "sensor.py").read_text(encoding="utf-8"))
+    tree = ast.parse((SOURCE_ROOT / "sensor.py").read_text(encoding="utf-8"))
     statements = [
         node for node in tree.body
         if isinstance(node, ast.Assign)
@@ -69,7 +69,7 @@ def _metadata():
     ]
     module = ast.fix_missing_locations(ast.Module(body=statements, type_ignores=[]))
     # The checked-out repository is the only source executed here.
-    exec(compile(module, str(ROOT / "sensor.py"), "exec"), scope)  # noqa: S102
+    exec(compile(module, str(SOURCE_ROOT / "sensor.py"), "exec"), scope)  # noqa: S102
     return scope
 
 
@@ -187,7 +187,7 @@ def _sensor(kind, coordinator=None):
 
 
 def test_sensor_platform_uses_real_sensor_entity_inheritance_and_native_attrs():
-    tree = ast.parse((ROOT / "sensor.py").read_text(encoding="utf-8"))
+    tree = ast.parse((SOURCE_ROOT / "sensor.py").read_text(encoding="utf-8"))
     base = next(
         node for node in tree.body
         if isinstance(node, ast.ClassDef) and node.name == "_BaseSensorClass"

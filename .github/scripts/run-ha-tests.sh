@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
-# Stage the HACS root-layout package into a proper Home Assistant integration.
-# CI runs this in a separate Python environment with real HA pytest fixtures.
+# Exercise the checked-in HACS package layout in a separate HA pytest environment.
+# Copy the integration directory as-is; do not repackage or rewrite its contents.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 test_root="$(mktemp -d)"
 trap 'rm -rf "$test_root"' EXIT
 
-mkdir -p "$test_root/custom_components/fmi" "$test_root/integration_tests"
+mkdir -p "$test_root/custom_components" "$test_root/integration_tests"
 touch "$test_root/custom_components/__init__.py"
 
-cp "$repo_root"/*.py "$repo_root"/manifest.json "$repo_root"/strings.json \
-  "$test_root/custom_components/fmi/"
-cp -R "$repo_root/translations" "$test_root/custom_components/fmi/"
+cp -R "$repo_root/custom_components/fmi" "$test_root/custom_components/fmi"
 cp -R "$repo_root/integration_tests/." "$test_root/integration_tests/"
 
 cat > "$test_root/pytest.ini" <<'PYTEST'

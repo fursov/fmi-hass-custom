@@ -18,19 +18,20 @@ Follow these instructions if an older manually installed version of the componen
 
     1. Install [HACS](https://www.hacs.xyz/)
     2. Add this repository as a [custom repository](https://www.hacs.xyz/docs/faq/custom_repositories/), type is "Integration"
-    3. Do steps 5-7 from "Manual installation" instructions below
+    3. Install FMI from HACS and restart Home Assistant
+    4. Add Finnish Meteorological Institute in Settings > Devices & services and enter the location
 
 ## Manual installation
 
-    1. Using a tool of choice open the directory (folder) for HA configuration (where you find configuration YAML file)
-    2. If `custom_components` directory does not exist, create one
-    3. In the `custom_components` directory create a new folder called "fmi"
-    4. Download all the files from the this repository and place the files in the new directory created.
-       If using `git clone` command, ensure that the local directory is renamed from `fmi-hass-custom` to `fmi`.
-       Either way, all files of the repo/download should be in `<HA configuration location>/custom_components/fmi/`
-    5. Restart Home Assistant
-    6. Install integration from UI (Settings --> Devices & services --> Add integration --> Search for fmi)
-    7. Specify the latitude and longitude (default values are picked from the Home Assistant configuration)
+    1. Open your Home Assistant configuration directory (where `configuration.yaml` lives).
+    2. Create `custom_components` if it does not exist.
+    3. Copy the **contents of this repository's `custom_components/fmi/` directory**
+       into `<HA configuration directory>/custom_components/fmi/`.
+       Do not copy the repository's `tests/`, `.github/`, or `hacs.json`
+       into Home Assistant's `fmi/` directory.
+    4. Restart Home Assistant.
+    5. Add Finnish Meteorological Institute in Settings > Devices & services.
+    6. Specify the latitude and longitude of the desired location.
 
 ## Weather and sensors
 
@@ -161,16 +162,31 @@ The minimal supported Home Assistant version is not declared in this PR:
 while current APIs are targeted, an end-to-end runtime test and version
 compatibility matrix remain part of PR8.
 
-## Release candidate: v0.8.0 (PR8)
+## Release v0.8.0 (PR8)
 
-After v0.7.2, the proposed next release is **v0.8.0**. PR8 introduces
-blocking integration tests running the real Home Assistant config-entry,
-sensor, weather, registry and service lifecycle against locally mocked FMI
-API responses. The existing fast offline suite remains independent. The
-published v0.8.0 GitHub release and tag are intentionally deferred until
-PR8 has been merged and the production installation has been smoke-tested.
+Version **v0.8.0** introduced blocking integration tests running the real
+Home Assistant config-entry, sensor, weather, registry and service lifecycle
+against locally mocked FMI API responses. The existing fast offline suite
+remains independent. The release checklist documents the validation performed.
 See [release checklist](RELEASE_CHECKLIST_0.8.0.md).
 
 PR8 replaces the third-party `async_timeout` import with Python's built-in
 `asyncio.timeout` (available since Python 3.11); Home Assistant no longer has
 to install that dependency for FMI to load.
+
+## Standard repository layout (PR9)
+
+The integration's production code, `manifest.json`, `strings.json` and
+translations live in `custom_components/fmi/`. HACS installs this directory
+to `<HA configuration directory>/custom_components/fmi/`, without the former
+`content_in_root: true` setting. Only repository-level documentation, CI
+configuration, HACS metadata and tests remain at the repository root.
+
+The domain, config entry, entity names, unique IDs, option names and the
+manifest version are unchanged by this move. Existing HACS installations do
+not need to be removed and re-added; update normally when a new tagged release
+including PR9 is available. Manual installations should copy only the new
+`custom_components/fmi/` contents, replacing the old files in place.
+
+No new release or tag is created by PR9. The published v0.8.0 tag continues
+to represent the previously released root-layout source.
