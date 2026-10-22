@@ -109,6 +109,7 @@ def test_weather_entity_identity(
         base="CoordinatorEntity",
         namespace={
             "CoordinatorEntity": DummyCoordinatorEntity,
+            "FMIDataUpdateCoordinator": FakeCoordinator,
             "const": const,
             "DeviceEntryType": SimpleNamespace(SERVICE="service"),
         },
@@ -138,6 +139,7 @@ def test_sensor_entity_identity(display_name, expected_id):
         base="CoordinatorEntity",
         namespace={
             "CoordinatorEntity": DummyCoordinatorEntity,
+            "FMIDataUpdateCoordinator": FakeCoordinator,
             "const": SimpleNamespace(
                 LOGGER=logging.getLogger("test.fmi"),
                 ATTRIBUTION="Weather Data provided by FMI",
