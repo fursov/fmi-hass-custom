@@ -53,3 +53,27 @@ determine the "Best Time Of The Day". Additionally there is are two options:
 ## Original author
 
 Anand Radhakrishnan [@anand-p-r](https://github.com/anand-p-r)
+
+## FMI source availability (PR3)
+
+The current weather estimate is required for the main weather coordinator.
+An unavailable or outdated current weather estimate marks that coordinator's
+entities unavailable until a successful refresh. A response older than 3 hours
+(or timestamped more than 2 hours in the future) is treated as stale.
+
+Forecast retrieval, lightning and sea-level queries are **optional**. Their
+failures do not prevent current-weather updates. Stale forecasts are cleared;
+forecast-dependent sensors become unavailable when the requested forecast is
+missing, but the place and best-time sensors can still use current weather.
+Lightning and sea-level sensors become unavailable when their own queries fail.
+An empty, successful lightning result means no recorded strikes, not an API
+failure.
+
+Configured observation stations refresh independently at 10-minute intervals.
+A failed first station refresh no longer blocks integration setup; its weather
+entity remains unavailable until the station recovers. Observations older than
+2 hours (or over 15 minutes in the future) are rejected.
+
+The source freshness thresholds are conservative safety defaults and may be
+revisited based on real FMI update behavior. No entity IDs or option keys have
+changed. Full Home Assistant runtime coverage remains a follow-up item.
