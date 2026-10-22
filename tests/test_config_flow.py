@@ -362,7 +362,7 @@ def test_config_entry_setup_failure_does_not_publish_runtime_data():
 
 def test_platform_sources_use_entry_runtime_data_not_hass_data():
     for name in ("sensor.py", "weather.py"):
-        source = (ROOT / name).read_text(encoding="utf-8")
+        source = (SOURCE_ROOT / name).read_text(encoding="utf-8")
         assert "config_entry.runtime_data" in source
         assert "hass.data[const.DOMAIN]" not in source
     source = (SOURCE_ROOT / "__init__.py").read_text(encoding="utf-8")
