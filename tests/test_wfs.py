@@ -98,8 +98,9 @@ def test_lightning_misaligned_xml_is_rejected_not_cross_paired():
     payload = _fixture("wfs_lightning.xml").decode().replace(
         "1 4.0 0.3 4.0", ""
     )
-    with pytest.raises(_wfs().WFSFormatError, match="misaligned"):
-        _wfs().parse_lightning(payload.encode(), (60, 25))
+    wfs = _wfs()
+    with pytest.raises(wfs.WFSFormatError, match="misaligned"):
+        wfs.parse_lightning(payload.encode(), (60, 25))
 
 
 def test_lightning_corrupt_values_are_skipped():
