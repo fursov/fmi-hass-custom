@@ -12,9 +12,9 @@ jobs:
       matrix:
         python-version: ["3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: prepare env
@@ -37,8 +37,8 @@ jobs:
       matrix:
         python-version: ["3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install test dependencies
@@ -54,7 +54,7 @@ jobs:
     name: Hassfest
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Stage root-layout integration
         shell: bash
         run: |
@@ -66,3 +66,26 @@ jobs:
           docker run --rm \
             -v "$RUNNER_TEMP/fmi-hassfest/fmi:/github/workspace/custom_components/fmi" \
             ghcr.io/home-assistant/hassfest:latest
+
+  ha-integration:
+    name: Home Assistant integration (Python 3.14)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements-ha-test.txt
+      - name: Install real Home Assistant test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-ha-test.txt
+          python -m pip show homeassistant pytest-homeassistant-custom-component
+      - name: Check integration test code
+        run: |
+          ruff check integration_tests
+          python -m compileall -q integration_tests
+      - name: Run actual Home Assistant lifecycle and config flow tests
+        run: bash .github/scripts/run-ha-tests.sh
