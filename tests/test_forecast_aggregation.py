@@ -7,12 +7,12 @@ from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
 import pytest
-from conftest import ROOT
+from conftest import SOURCE_ROOT
 
 
 def _module():
     spec = importlib.util.spec_from_file_location(
-        "fmi_forecast_aggregation", ROOT / "forecast.py"
+        "fmi_forecast_aggregation", SOURCE_ROOT / "forecast.py"
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

@@ -6,13 +6,13 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
-from conftest import ROOT, source_definition
+from conftest import SOURCE_ROOT, source_definition
 
 
 def _forecast_builder():
     """Import the pure helper without importing the HA integration package."""
     spec = importlib.util.spec_from_file_location(
-        "fmi_forecast_offline", ROOT / "forecast.py"
+        "fmi_forecast_offline", SOURCE_ROOT / "forecast.py"
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

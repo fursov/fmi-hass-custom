@@ -1,8 +1,7 @@
-"""Offline characterization helpers for the upstream root-layout integration.
+"""Offline characterization helpers for the FMI custom integration.
 
-The real Home Assistant imports are intentionally not executed here: upstream's
-flat HACS layout and its current HA compatibility are separate refactor tasks.
-Instead, tests execute selected unchanged definitions from the source AST.
+The real Home Assistant imports are intentionally not executed here.
+Tests execute selected definitions from the source AST without starting HA.
 """
 
 import ast
@@ -13,6 +12,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(os.environ.get("FMI_SOURCE_ROOT", Path(__file__).resolve().parents[1]))
+SOURCE_ROOT = ROOT / "custom_components" / "fmi"
 
 
 def source_definition(filename, name, namespace=None, methods=None, base=None):
@@ -21,7 +21,7 @@ def source_definition(filename, name, namespace=None, methods=None, base=None):
     This is not a replacement for HA integration tests. It makes behavioral
     baseline tests runnable without a Home Assistant installation or network.
     """
-    source = (ROOT / filename).read_text(encoding="utf-8")
+    source = (SOURCE_ROOT / filename).read_text(encoding="utf-8")
     tree = ast.parse(source, filename=filename)
     matches = [
         node
@@ -49,7 +49,7 @@ def source_definition(filename, name, namespace=None, methods=None, base=None):
     module = ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[]))
     scope = dict(namespace or {})
     # Only definitions read from this checked-out repository are executed.
-    exec(compile(module, str(ROOT / filename), "exec"), scope)  # noqa: S102
+    exec(compile(module, str(SOURCE_ROOT / filename), "exec"), scope)  # noqa: S102
     return scope[name]
 
 

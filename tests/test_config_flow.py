@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from conftest import ROOT, source_definition
+from conftest import SOURCE_ROOT, source_definition
 
 
 class FMIClientError(Exception):
@@ -26,7 +26,7 @@ class ConfigEntryNotReady(Exception):
 
 def _constants():
     """Evaluate the real constant assignments without Home Assistant imports."""
-    source = ROOT / "const.py"
+    source = SOURCE_ROOT / "const.py"
     node = ast.parse(source.read_text(encoding="utf-8"))
     assignments = [item for item in node.body if isinstance(item, ast.Assign)]
     program = ast.fix_missing_locations(ast.Module(
@@ -142,7 +142,7 @@ def _options():
 
 
 def test_options_flow_uses_framework_config_entry_not_legacy_override():
-    tree = ast.parse((ROOT / "config_flow.py").read_text(encoding="utf-8"))
+    tree = ast.parse((SOURCE_ROOT / "config_flow.py").read_text(encoding="utf-8"))
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef)
                and n.name == "FMIOptionsFlowHandler")
     assert not any(isinstance(n, ast.FunctionDef) and n.name == "config_entry"
@@ -362,16 +362,16 @@ def test_config_entry_setup_failure_does_not_publish_runtime_data():
 
 def test_platform_sources_use_entry_runtime_data_not_hass_data():
     for name in ("sensor.py", "weather.py"):
-        source = (ROOT / name).read_text(encoding="utf-8")
+        source = (SOURCE_ROOT / name).read_text(encoding="utf-8")
         assert "config_entry.runtime_data" in source
         assert "hass.data[const.DOMAIN]" not in source
-    source = (ROOT / "__init__.py").read_text(encoding="utf-8")
+    source = (SOURCE_ROOT / "__init__.py").read_text(encoding="utf-8")
     assert "config_entry.runtime_data =" in source
     assert "hass.data[const.DOMAIN]" not in source
 
 
 def test_manifest_tracks_owned_docs_and_direct_dependencies():
-    manifest = json.loads((ROOT / "manifest.json").read_text())
+    manifest = json.loads((SOURCE_ROOT / "manifest.json").read_text())
     assert manifest["domain"] == "fmi"
     assert manifest["version"] == "0.8.0"
     assert manifest["config_flow"] is True
@@ -384,10 +384,10 @@ def test_manifest_tracks_owned_docs_and_direct_dependencies():
 
 
 def test_strings_and_all_translations_cover_the_same_flow_keys():
-    original = json.loads((ROOT / "strings.json").read_text())
+    original = json.loads((SOURCE_ROOT / "strings.json").read_text())
     for name in ("en", "fi", "ru"):
         translated = json.loads(
-            (ROOT / "translations" / f"{name}.json").read_text()
+            (SOURCE_ROOT / "translations" / f"{name}.json").read_text()
         )
         assert set(translated["config"]["error"]) == {
             "cannot_connect", "unknown"

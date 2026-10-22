@@ -2,8 +2,8 @@
 
 These tests deliberately run **without Home Assistant, HTTP calls or FMI servers**.
 They load selected original functions/methods from Python's AST and execute them
-with explicit minimal dependencies. This avoids changing the existing flat
-HACS package layout or coupling the first refactor PR to a moving HA release.
+with explicit minimal dependencies, without loading Home Assistant itself.
+Production code is now in `custom_components/fmi/` (PR9).
 
 ```bash
 python -m pip install -r requirements-test.txt
@@ -26,18 +26,16 @@ a recorded FMI API response. Never use it to assert actual API availability.
 PR4 resolved both original forecast xfails. The suite now expects them to pass.
 
 Limitations: AST-isolated tests do not exercise HA lifecycle, registry,
-`ConfigFlow`, actual WFS parsing or coordinator scheduling. PR2/PR3 must add
-integration tests using `pytest-homeassistant-custom-component` after a target
-HA version and installable test package layout are established.
+`ConfigFlow`, FMI network responses or coordinator scheduling. The separate
+HA integration job added in PR8 covers the actual HA registry and lifecycle.
 
-Hassfest is run as an **advisory** job using a staged integration directory.
-Any findings there are tracked for the compatibility/manifest follow-up PR;
-this stage does not alter the published integration files.
+Hassfest is a **blocking** CI job and validates the checked-in
+`custom_components/fmi/` directory directly.
 
-The runner invokes the tests from a temporary directory because recent pytest
-versions otherwise collect the repository-root `__init__.py` as a package and
-import the live FMI integration. `FMI_SOURCE_ROOT` points the tests back at
-the checked-out source files and fixtures. No production package is imported.
+The offline runner continues to invoke tests from a temporary directory to
+isolate them from HA integration-test fixtures. `FMI_SOURCE_ROOT` points
+to the checked-out repository; `SOURCE_ROOT` points to
+`custom_components/fmi/`. No production package is imported.
 
 ## PR2: coordinator lifecycle characterization
 
@@ -127,11 +125,19 @@ To run it, use Python 3.14 and install `requirements-ha-test.txt`. Then:
 bash .github/scripts/run-ha-tests.sh
 ```
 
-The runner copies this repository's *root-layout* production integration to a
-temporary `custom_components/fmi` installation. It does not modify the HACS
-layout or import the repository root as a package. Only FMI API/geocoding
-calls are mocked; Home Assistant lifecycle, registries and services are real.
+The runner copies the checked-in `custom_components/fmi` directory as-is into
+a temporary Home Assistant configuration. It neither flattens production
+sources nor changes the HACS layout. Only FMI API/geocoding calls are mocked;
+Home Assistant lifecycle, registries and services are real.
 
 The HA test dependency is pinned to a known plugin build for reproducible CI.
 Check the installed Home Assistant version in the job log; this does not yet
 establish support for *all* HA releases or prove live FMI XML compatibility.
+
+## PR9: standard source layout
+
+`test_layout.py` checks the HACS metadata switch, canonical integration
+directory and absence of stale root-level production copies. Existing AST
+tests read code through `SOURCE_ROOT` and use `ROOT` for fixture paths.
+The HA job copies the checked-in `custom_components/fmi` directory unchanged,
+and Hassfest validates that exact directory.
