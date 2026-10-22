@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import typing
 import time
+from asyncio import timeout
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
@@ -11,7 +12,6 @@ import fmi_weather_client as fmi
 import fmi_weather_client.models as fmi_models
 import fmi_weather_client.errors as fmi_erros
 import requests
-from asyncio import timeout
 from geopy.geocoders import Nominatim
 from homeassistant.util import dt as dt_util
 from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE, CONF_OFFSET, Platform
