@@ -14,7 +14,7 @@ def _model_namespace():
         "datetime": datetime,
         "dt_util": SimpleNamespace(as_local=lambda stamp: stamp),
         "local_display_time": lambda value, _to_local: datetime.fromisoformat(
-            value.replace("Z", "+00:00")
+            value
         ).strftime("%Y-%m-%d %H:%M"),
     }
 

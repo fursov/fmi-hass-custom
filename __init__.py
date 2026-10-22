@@ -255,8 +255,12 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
 
         # Reverse geocoding is optional and limited to one new strike per poll.
         # Keep the cache across refreshes to avoid repeated Nominatim queries.
-        self._geolocator = None
-        self._reverse_geocoder = CachedReverseGeocoder(self._reverse_address)
+        geolocator = Nominatim(user_agent="fmi_hass_custom")
+        self._reverse_geocoder = CachedReverseGeocoder(
+            lambda latitude, longitude: geolocator.reverse(
+                f"{latitude}, {longitude}", language="en", timeout=3
+            )
+        )
 
         name = name if name else const.DOMAIN
 
@@ -345,14 +349,6 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
                 self.best_humidity = forecast.humidity.value
                 self.best_wind_speed = forecast.wind_speed.value
                 self.best_precipitation = forecast.precipitation_amount.value
-
-    def _reverse_address(self, latitude, longitude):
-        """Reverse lookup called only through the rate-limited geocoder."""
-        if self._geolocator is None:
-            self._geolocator = Nominatim(user_agent="fmi_hass_custom")
-        return self._geolocator.reverse(
-            f"{latitude}, {longitude}", language="en", timeout=3
-        )
 
     def __get_lightning_url(self):
         """Fetch an FMI lightning coverage using a timezone-correct UTC URL."""
