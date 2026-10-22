@@ -45,7 +45,7 @@ def test_hacs_uses_standard_integration_directory():
     assert hacs["name"] == "FMI"
     assert hacs.get("content_in_root") is not True
     assert manifest["domain"] == DOMAIN
-    assert manifest["version"] == "0.8.0"
+    assert manifest["version"] == "0.9.0"
     assert manifest["config_flow"] is True
 
 
@@ -56,3 +56,19 @@ def test_ci_uses_actual_component_directory_without_root_repackaging():
     assert "$GITHUB_WORKSPACE/custom_components/fmi:" in workflow
     assert 'cp -R "$repo_root/custom_components/fmi"' in runner
     assert 'cp "$repo_root"/*.py' not in runner
+
+
+def test_release_notes_and_manifest_version_are_consistent():
+    """Release candidate metadata and root documentation must agree."""
+    manifest = json.loads((SOURCE_ROOT / "manifest.json").read_text())
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    checklist = (ROOT / "RELEASE_CHECKLIST_0.9.0.md").read_text()
+    notes = (ROOT / "RELEASE_NOTES_0.9.0.md").read_text()
+    assert manifest["version"] == "0.9.0"
+    assert "## v0.9.0" in changelog
+    assert "## v0.8.0" in changelog
+    assert "PR10" in changelog and "PR9" in changelog
+    assert "CHANGELOG.md" in readme
+    assert "## FMI source availability (PR3)" not in readme
+    assert "v0.9.0" in checklist and "v0.9.0" in notes
