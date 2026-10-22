@@ -305,15 +305,18 @@ def test_failed_station_initial_refresh_does_not_block_entry_setup():
 
     class Entry:
         entry_id = "abc"
+        runtime_data = None
 
         def add_update_listener(self, _callback):
             return lambda: None
+
+        def async_on_unload(self, _unsubscriber):
+            pass
 
     async def forward_entry_setups(_entry, _platforms):
         return None
 
     hass = SimpleNamespace(
-        data={"fmi": {}},
         config_entries=SimpleNamespace(async_forward_entry_setups=forward_entry_setups),
     )
     const = SimpleNamespace(
@@ -334,10 +337,15 @@ def test_failed_station_initial_refresh_does_not_block_entry_setup():
             "LOGGER": logging.getLogger("fmi.test.setup"),
             "const": const,
             "PLATFORMS": ["sensor", "weather"],
+            "FMIConfigEntry": Entry,
+            "FMIRuntimeData": lambda coordinator, observation: SimpleNamespace(
+                coordinator=coordinator, observation=observation
+            ),
         },
     )
-    assert asyncio.run(setup(hass, Entry()))
-    assert isinstance(hass.data["fmi"]["abc"]["observation"], StationCoordinator)
+    entry = Entry()
+    assert asyncio.run(setup(hass, entry))
+    assert isinstance(entry.runtime_data.observation, StationCoordinator)
 
 
 class Entity:

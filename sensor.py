@@ -15,7 +15,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import FMIDataUpdateCoordinator
+from . import FMIConfigEntry, FMIDataUpdateCoordinator
 from . import utils
 from . import const
 
@@ -98,12 +98,12 @@ SENSOR_DESCRIPTIONS = {
 PARALLEL_UPDATES = 1
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(hass, config_entry: FMIConfigEntry, async_add_entities):
     """Set up the FMI Sensor, including Best Time Of the Day sensor."""
     name = config_entry.data[ha_const.CONF_NAME]
     lightning_mode = config_entry.options.get(const.CONF_LIGHTNING, False)
 
-    coordinator = hass.data[const.DOMAIN][config_entry.entry_id][const.COORDINATOR]
+    coordinator = config_entry.runtime_data.coordinator
 
     entity_list = []
 

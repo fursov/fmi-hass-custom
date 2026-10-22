@@ -1,7 +1,9 @@
 """Config flow for FMI (Finnish Meteorological Institute) integration."""
 
+import asyncio
+
 import fmi_weather_client as fmi_client
-import fmi_weather_client.errors as fmi_erros
+import fmi_weather_client.errors as fmi_errors
 
 import voluptuous as vol
 
@@ -14,50 +16,35 @@ from . import const
 
 
 async def validate_user_config(hass: core.HomeAssistant, data):
-    """Validate input configuration for FMI.
-
-    Data contains Latitude / Longitude provided by user or from
-    HASS default configuration.
-    """
+    """Verify that FMI can provide weather for the requested coordinates."""
+    _ = hass
     latitude = data[ha_const.CONF_LATITUDE]
     longitude = data[ha_const.CONF_LONGITUDE]
 
-    errors = ""
-
-    # Current Weather
     try:
-        weather_data = await hass.async_add_executor_job(
-            fmi_client.weather_by_coordinates, latitude, longitude
-        )
-
+        async with asyncio.timeout(const.TIMEOUT_CONFIG_FLOW_IN_SEC):
+            weather_data = await fmi_client.async_weather_by_coordinates(
+                latitude, longitude
+            )
+        if weather_data is None or not weather_data.place:
+            raise ValueError("FMI returned no weather location")
         return {"place": weather_data.place, "err": ""}
-    except fmi_erros.ClientError as err:
-        err_string = (
-            "Client error with status "
-            + str(err.status_code)
-            + " and message "
-            + err.message
-        )
-        errors = "client_connect_error"
-        const.LOGGER.error(err_string)
-    except fmi_erros.ServerError as err:
-        err_string = (
-            "Server error with status "
-            + str(err.status_code)
-            + " and message "
-            + err.body
-        )
-        errors = "server_connect_error"
-        const.LOGGER.error(err_string)
-
-    return {"place": "None", "err": errors}
+    except (fmi_errors.ClientError, fmi_errors.ServerError,
+            TimeoutError, OSError) as error:
+        const.LOGGER.warning("Unable to connect to FMI: %s", error)
+        return {"place": None, "err": "cannot_connect"}
+    # Unexpected FMI client failures are reported to the user as an error
+    # instead of surfacing an exception that breaks the config flow.
+    # pylint: disable-next=broad-exception-caught
+    except Exception:  # noqa: BLE001
+        const.LOGGER.exception("Unexpected error while validating FMI location")
+        return {"place": None, "err": "unknown"}
 
 
-class FMIConfigFlowHandler(config_entries.ConfigFlow, domain="fmi"):
+class FMIConfigFlowHandler(config_entries.ConfigFlow, domain=const.DOMAIN):
     """Config flow handler for FMI."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     async def async_step_user(self, user_input=None):
         """Handle user step."""
@@ -76,7 +63,7 @@ class FMIConfigFlowHandler(config_entries.ConfigFlow, domain="fmi"):
             if valid.get("err", "") == "":
                 return self.async_create_entry(title=valid["place"], data=user_input)
 
-            errors["fmi"] = valid["err"]
+            errors["base"] = valid["err"]
 
         data_schema = vol.Schema(
             {
@@ -104,11 +91,6 @@ class FMIConfigFlowHandler(config_entries.ConfigFlow, domain="fmi"):
 
 class FMIOptionsFlowHandler(config_entries.OptionsFlow):
     """Config flow options for FMI."""
-
-    @property
-    def config_entry(self):
-        """Return the config entry linked to the current options flow."""
-        return self.hass.config_entries.async_get_entry(self.handler)
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""

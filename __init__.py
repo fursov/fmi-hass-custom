@@ -1,7 +1,10 @@
 """The FMI (Finnish Meteorological Institute) component."""
 
+from __future__ import annotations
+
 import typing
 import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 import fmi_weather_client as fmi
@@ -12,11 +15,13 @@ from async_timeout import timeout
 from dateutil import tz
 from geopy.geocoders import Nominatim
 from homeassistant.util import dt as dt_util
-from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE, CONF_OFFSET
+from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE, CONF_OFFSET, Platform
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.update_coordinator import (DataUpdateCoordinator,
                                                       UpdateFailed)
 
@@ -32,7 +37,20 @@ from .wfs import (
 
 
 LOGGER = const.LOGGER
-PLATFORMS = ["sensor", "weather"]
+PLATFORMS = (Platform.SENSOR, Platform.WEATHER)
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(const.DOMAIN)
+
+
+@dataclass(slots=True)
+class FMIRuntimeData:
+    """Runtime-only coordinators belonging to one FMI config entry."""
+
+    coordinator: FMIDataUpdateCoordinator
+    observation: FMIObservationUpdateCoordinator | None
+
+
+type FMIConfigEntry = ConfigEntry[FMIRuntimeData]
+
 
 
 def base_unique_id(latitude, longitude):
@@ -72,68 +90,62 @@ def has_future_forecast(forecast, now=None):
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up configured FMI."""
-    _ = config
-    hass.data.setdefault(const.DOMAIN, {})
+    """FMI is configured exclusively through config entries."""
+    _ = hass, config
     return True
 
 
-async def async_setup_entry(hass, config_entry) -> bool:
-    """Set up FMI as config entry."""
+async def async_setup_entry(hass: HomeAssistant, config_entry: FMIConfigEntry) -> bool:
+    """Set up FMI and expose its coordinators only through runtime_data."""
     websession = async_get_clientsession(hass)
 
-    coordinator = FMIDataUpdateCoordinator(
-        hass, websession, config_entry
-    )
+    coordinator = FMIDataUpdateCoordinator(hass, websession, config_entry)
     await coordinator.async_config_entry_first_refresh()
 
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
 
     try:
-        coordinator_observation = FMIObservationUpdateCoordinator(
-            hass, websession, config_entry)
+        observation = FMIObservationUpdateCoordinator(
+            hass, websession, config_entry
+        )
     except AttributeError:
         # A station is not configured; only the forecast coordinator is needed.
-        coordinator_observation = None
-    if coordinator_observation is not None:
+        observation = None
+
+    if observation is not None:
         try:
-            await coordinator_observation.async_config_entry_first_refresh()
+            await observation.async_config_entry_first_refresh()
         except ConfigEntryNotReady:
-            # Keep the station coordinator registered. Its entity is unavailable
-            # until the next successful station poll, without blocking setup.
+            # Observation recovery must not block the core weather integration.
             LOGGER.warning(
                 "FMI observation station is unavailable; continuing with forecast"
             )
 
-    undo_listener = config_entry.add_update_listener(update_listener)
+    config_entry.runtime_data = FMIRuntimeData(
+        coordinator=coordinator, observation=observation
+    )
+    # HA automatically disposes this callback when the entry is unloaded.
+    config_entry.async_on_unload(
+        config_entry.add_update_listener(update_listener)
+    )
+    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
+    return True
 
-    hass.data[const.DOMAIN][config_entry.entry_id] = {
-        const.COORDINATOR: coordinator,
-        const.COORDINATOR_OBSERVATION: coordinator_observation,
-        const.UNDO_UPDATE_LISTENER: undo_listener,
-    }
 
-    await hass.config_entries.async_forward_entry_setups(
-        config_entry,
-        PLATFORMS
+async def async_unload_entry(
+    hass: HomeAssistant, config_entry: FMIConfigEntry
+) -> bool:
+    """Unload FMI entities; Home Assistant owns runtime-data cleanup."""
+    return await hass.config_entries.async_unload_platforms(
+        config_entry, PLATFORMS
     )
 
-    return True
 
-
-async def async_unload_entry(hass, config_entry):
-    """Unload an FMI config entry."""
-    await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
-
-    hass.data[const.DOMAIN][config_entry.entry_id][const.UNDO_UPDATE_LISTENER]()
-    hass.data[const.DOMAIN].pop(config_entry.entry_id)
-
-    return True
-
-
-async def update_listener(hass, config_entry):
-    """Update FMI listener."""
+async def update_listener(
+    hass: HomeAssistant, config_entry: FMIConfigEntry
+) -> None:
+    """Reload FMI when options are modified."""
     await hass.config_entries.async_reload(config_entry.entry_id)
 
 

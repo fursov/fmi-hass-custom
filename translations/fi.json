@@ -1,46 +1,47 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Antamasi sijainti on jo määritelty"
-        },
-        "error": {
-            "cannot_connect": "Yhteydenotto epäonnistui",
-            "unknown": "Odottamaton virhe"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "latitude": "Leveysaste",
-                    "longitude": "Pituusaste",
-                    "name": "Nimi"
-                },
-                "description": "Ilmatieteen laitos määrittely parametrit",
-                "title": "Ilmatieteen laitos"
-            }
+  "title": "Ilmatieteen laitos",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ilmatieteen laitos",
+        "description": "Määritä FMI-sääpalvelun sijainti.",
+        "data": {
+          "name": "Nimi",
+          "latitude": "Leveysaste",
+          "longitude": "Pituusaste"
         }
+      }
     },
-    "options": {
-        "step": {
-            "user": {
-                "data": {
-                    "max_precipitation": "Maksimi sateenkertymä mm",
-                    "max_relative_humidity": "Maksimi suhteellinen kosteus %",
-                    "max_temperature": "Maksimi lämpötila °C",
-                    "max_wind_speed": "Maksimi tuulennopeus m/s",
-                    "min_precipitation": "Minimi sateenkertymä mm",
-                    "min_relative_humidity": "Minimi suhteellinen kosteus %",
-                    "min_temperature": "Minimi lämpötila °C",
-                    "min_wind_speed": "Minimi tuulennopeus m/s",
-                    "offset": "Sääennusteen aikaväli h",
-                    "forecast_days": "Ennustepäivien määrä",
-                    "daily_mode": "Aktivoi vuorokausiennuste-entiteetti",
-                    "lightning_sensor": "Aktivoi ukkostutka",
-                    "lightning_radius": "Ukkostutkan säde km",
-                    "observation_station_id": "FMI:n havaintoaseman ID"
-                },
-                "description": "Maksimin ja minimin sisältävät parametrit käytetään määrittämään päivän parhaan ajan",
-                "title": "Ilmatieteen laitos asetukset"
-            }
-        }
+    "error": {
+      "cannot_connect": "Yhteys Ilmatieteen laitokseen epäonnistui. Tarkista sijainti.",
+      "unknown": "Odottamaton virhe FMI-sijaintia tarkistettaessa."
+    },
+    "abort": {
+      "already_configured": "Sijainti on jo määritetty."
     }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "FMI-asetukset",
+        "description": "Sääennuste, salamapaikannus ja päivän parhaan ajan asetukset.",
+        "data": {
+          "forecast_days": "Ennustepäivien määrä",
+          "offset": "Ennusteen aikaväli (tuntia)",
+          "min_relative_humidity": "Suhteellisen kosteuden alaraja (%)",
+          "max_relative_humidity": "Suhteellisen kosteuden yläraja (%)",
+          "min_temperature": "Lämpötilan alaraja (°C)",
+          "max_temperature": "Lämpötilan yläraja (°C)",
+          "min_wind_speed": "Tuulennopeuden alaraja (m/s)",
+          "max_wind_speed": "Tuulennopeuden yläraja (m/s)",
+          "min_precipitation": "Sateen alaraja (mm/h)",
+          "max_precipitation": "Sateen yläraja (mm/h)",
+          "daily_mode": "Luo vanha vuorokausisääentiteetti",
+          "lightning_sensor": "Ota salamapaikannus käyttöön",
+          "lightning_radius": "Salamahakualueen säde (km)",
+          "observation_station_id": "FMI-havaintoaseman ID (0 = pois käytöstä)"
+        }
+      }
+    }
+  }
 }
