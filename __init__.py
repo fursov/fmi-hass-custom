@@ -523,6 +523,8 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
             self.logger.warning("FMI forecast is unavailable: %s", error)
             self.forecast = None
             return
+        # Broad handling is deliberate at this optional-source boundary.
+        # pylint: disable-next=broad-exception-caught
         except Exception:  # noqa: BLE001
             self.logger.exception("FMI forecast request failed unexpectedly")
             self.forecast = None
@@ -543,6 +545,8 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             async with timeout(const.TIMEOUT_OPTIONAL_SOURCE_IN_SEC):
                 return await self._hass.async_add_executor_job(func)
+        # Broad handling is deliberate at this optional-source boundary.
+        # pylint: disable-next=broad-exception-caught
         except Exception:  # noqa: BLE001
             self.logger.exception("FMI optional source %s is unavailable", name)
             return None
@@ -565,6 +569,8 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
             await self._hass.async_add_executor_job(
                 self.__update_best_weather_condition
             )
+        # Broad handling is deliberate at this optional-source boundary.
+        # pylint: disable-next=broad-exception-caught
         except Exception:  # noqa: BLE001
             self.logger.exception("FMI best-time calculation failed")
             self.best_time = None

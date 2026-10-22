@@ -7,7 +7,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-
 from conftest import source_definition
 
 
@@ -369,7 +368,7 @@ def test_only_dependent_sensors_become_unavailable():
     c = SimpleNamespace(
         last_update_success=True,
         time_step=3,
-        get_forecasts=lambda: [],
+        get_forecasts=list,
         lightning_data=None,
         mareo_data=None,
     )
