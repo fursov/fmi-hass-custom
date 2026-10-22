@@ -28,3 +28,48 @@ jobs:
       - name: pylint
         run: |
           pylint *.py --init-hook='import sys; sys.path.append(".")'
+
+  regression:
+    name: Offline regression (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-test.txt
+      - name: Check new test code
+        run: |
+          ruff check tests
+          python -m compileall -q tests
+      - name: Run offline regression tests
+        run: bash .github/scripts/run-offline-tests.sh
+
+  hassfest:
+    name: Hassfest (advisory baseline)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage root-layout integration
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/fmi-hassfest/fmi"
+          cp ./*.py ./*.json "$RUNNER_TEMP/fmi-hassfest/fmi/"
+          cp -r ./translations "$RUNNER_TEMP/fmi-hassfest/fmi/"
+      - name: Check legacy integration metadata
+        id: hassfest
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            -v "$RUNNER_TEMP/fmi-hassfest/fmi:/github/workspace/custom_components/fmi" \
+            ghcr.io/home-assistant/hassfest:latest
+      - name: Report legacy hassfest findings
+        if: steps.hassfest.outcome == 'failure'
+        run: |
+          echo "::warning::Hassfest reported pre-existing integration compliance issues; this is advisory in PR1."
+          echo "The hassfest step log contains the individual findings for a later refactor PR."

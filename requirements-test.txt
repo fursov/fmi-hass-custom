@@ -1,0 +1,3 @@
+# PR1: offline characterization tests; no Home Assistant install is required.
+pytest>=8.3,<10
+ruff>=0.12,<1
