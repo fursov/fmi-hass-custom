@@ -5,7 +5,8 @@ import logging
 from types import SimpleNamespace
 
 import pytest
-from conftest import ROOT, source_definition
+
+from tests.conftest import ROOT, source_definition
 
 
 class DummyCoordinatorEntity:
