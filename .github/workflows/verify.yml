@@ -76,7 +76,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-ha-test.txt
-          python -m pip show homeassistant pytest-homeassistant-custom-component
+          python -m pip show homeassistant pytest-homeassistant-custom-component fmi-weather-client
       - name: Check integration test code
         run: |
           ruff check integration_tests
