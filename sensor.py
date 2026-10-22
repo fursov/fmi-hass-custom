@@ -100,6 +100,7 @@ PARALLEL_UPDATES = 1
 
 async def async_setup_entry(hass, config_entry: FMIConfigEntry, async_add_entities):
     """Set up the FMI Sensor, including Best Time Of the Day sensor."""
+    _ = hass
     name = config_entry.data[ha_const.CONF_NAME]
     lightning_mode = config_entry.options.get(const.CONF_LIGHTNING, False)
 

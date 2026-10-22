@@ -21,6 +21,7 @@ PARALLEL_UPDATES = 1
 
 async def async_setup_entry(hass, config_entry: FMIConfigEntry, async_add_entities):
     """Add an FMI weather entity from a config_entry."""
+    _ = hass
     name = config_entry.data[CONF_NAME]
     daily_mode = config_entry.options.get(const.CONF_DAILY_MODE, False)
     station_id = bool(config_entry.options.get(const.CONF_OBSERVATION_STATION, 0))

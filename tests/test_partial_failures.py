@@ -337,6 +337,7 @@ def test_failed_station_initial_refresh_does_not_block_entry_setup():
             "LOGGER": logging.getLogger("fmi.test.setup"),
             "const": const,
             "PLATFORMS": ["sensor", "weather"],
+            "HomeAssistant": object,
             "FMIConfigEntry": Entry,
             "FMIRuntimeData": lambda coordinator, observation: SimpleNamespace(
                 coordinator=coordinator, observation=observation
