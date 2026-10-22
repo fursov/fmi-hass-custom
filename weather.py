@@ -10,7 +10,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from . import FMIDataUpdateCoordinator
+from . import FMIConfigEntry, FMIDataUpdateCoordinator
 from . import const
 from . import utils
 from .forecast import build_forecast
@@ -19,15 +19,15 @@ from .forecast import build_forecast
 PARALLEL_UPDATES = 1
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(hass, config_entry: FMIConfigEntry, async_add_entities):
     """Add an FMI weather entity from a config_entry."""
+    _ = hass
     name = config_entry.data[CONF_NAME]
     daily_mode = config_entry.options.get(const.CONF_DAILY_MODE, False)
     station_id = bool(config_entry.options.get(const.CONF_OBSERVATION_STATION, 0))
 
-    domain_data = hass.data[const.DOMAIN][config_entry.entry_id]
-
-    coordinator = domain_data[const.COORDINATOR]
+    runtime = config_entry.runtime_data
+    coordinator = runtime.coordinator
 
     entity_list = [FMIWeatherEntity(name, coordinator)]
     if daily_mode:
@@ -35,7 +35,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
                                             daily_mode=True))
     if station_id:
         try:
-            coordinator = domain_data.get(const.COORDINATOR_OBSERVATION)
+            coordinator = runtime.observation
             if coordinator is not None:
                 entity_list.append(FMIWeatherEntity(
                     f"{name} (observation)", coordinator, station_id=station_id))

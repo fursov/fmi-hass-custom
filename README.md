@@ -136,3 +136,27 @@ dates, including year boundaries.
 The new XML fixtures are **synthetic WFS-shaped responses**, not recorded
 live FMI service output. Test against an actual FMI response and your HA
 timezone before merging this PR.
+
+## Configuration entry modernization (PR7)
+
+The integration uses `ConfigEntry.runtime_data` to keep the weather and
+optional station coordinators. There are no longer per-entry coordinator
+dictionaries in `hass.data`. Home Assistant owns their lifetime and the
+options update-listener unsubscribe callback; the same existing entry,
+entity identifiers, and option keys continue to work after an upgrade.
+
+Configuration flow validation uses the FMI asynchronous weather endpoint
+with a 15-second timeout. A network problem shows a translated connection
+error on the form instead of exiting the flow. The options flow uses
+Home Assistant's built-in `config_entry` property and retains the existing
+reload-on-change behavior.
+
+Configuration forms and all 14 option labels are available in English,
+Finnish and Russian. Documentation, maintainer, issue tracker and third-party runtime dependencies
+are identified in the integration manifest (Home Assistant core libraries are
+not duplicated). Hassfest validation is now a blocking CI check.
+The version remains `0.6.2` until the release PR.
+
+The minimal supported Home Assistant version is not declared in this PR:
+while current APIs are targeted, an end-to-end runtime test and version
+compatibility matrix remain part of PR8.

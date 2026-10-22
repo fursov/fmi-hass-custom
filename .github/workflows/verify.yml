@@ -51,7 +51,7 @@ jobs:
         run: bash .github/scripts/run-offline-tests.sh
 
   hassfest:
-    name: Hassfest (advisory baseline)
+    name: Hassfest
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -61,15 +61,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/fmi-hassfest/fmi"
           cp ./*.py ./*.json "$RUNNER_TEMP/fmi-hassfest/fmi/"
           cp -r ./translations "$RUNNER_TEMP/fmi-hassfest/fmi/"
-      - name: Check legacy integration metadata
-        id: hassfest
-        continue-on-error: true
+      - name: Validate integration metadata
         run: |
           docker run --rm \
             -v "$RUNNER_TEMP/fmi-hassfest/fmi:/github/workspace/custom_components/fmi" \
             ghcr.io/home-assistant/hassfest:latest
-      - name: Report legacy hassfest findings
-        if: steps.hassfest.outcome == 'failure'
-        run: |
-          echo "::warning::Hassfest reported pre-existing integration compliance issues; this is advisory in PR1."
-          echo "The hassfest step log contains the individual findings for a later refactor PR."

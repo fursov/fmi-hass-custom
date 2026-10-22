@@ -1,46 +1,47 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "The given location is already configured"
-        },
-        "error": {
-            "cannot_connect": "Failed to connect",
-            "unknown": "Unexpected error"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "latitude": "Latitude",
-                    "longitude": "Longitude",
-                    "name": "Name"
-                },
-                "description": "FMI Configuration Parameters",
-                "title": "Finnish Meteorological Institute"
-            }
+  "title": "Finnish Meteorological Institute",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Finnish Meteorological Institute",
+        "description": "Configure the FMI weather location.",
+        "data": {
+          "name": "Name",
+          "latitude": "Latitude",
+          "longitude": "Longitude"
         }
+      }
     },
-    "options": {
-        "step": {
-            "user": {
-                "data": {
-                    "max_precipitation": "Max Precipitation mm",
-                    "max_relative_humidity": "Max Relative Humidity %",
-                    "max_temperature": "Max Temperature °C",
-                    "max_wind_speed": "Max Wind Speed m/s",
-                    "min_precipitation": "Min Precipitation mm",
-                    "min_relative_humidity": "Min Relative Humidity %",
-                    "min_temperature": "Min Temperature °C",
-                    "min_wind_speed": "Min Wind Speed m/s",
-                    "offset": "Forecast Interval h",
-                    "forecast_days": "Num of forecast days",
-                    "daily_mode": "Activate Daily forecast entity",
-                    "lightning_sensor": "Activate Lightning sensor",
-                    "lightning_radius": "Lightning sensor radius km",
-                    "observation_station_id": "FMI's Observation Station ID"
-                },
-                "description": "Maximum and minimum parameters are used to determine the Best Time Of The Day",
-                "title": "Finnish Meteorological Institute Options"
-            }
-        }
+    "error": {
+      "cannot_connect": "Cannot connect to FMI. Check the location and try again.",
+      "unknown": "Unexpected error while validating FMI location."
+    },
+    "abort": {
+      "already_configured": "This location is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "FMI options",
+        "description": "Weather forecast settings, lightning detection, and best-time conditions.",
+        "data": {
+          "forecast_days": "Forecast days",
+          "offset": "Forecast interval (hours)",
+          "min_relative_humidity": "Minimum relative humidity (%)",
+          "max_relative_humidity": "Maximum relative humidity (%)",
+          "min_temperature": "Minimum temperature (°C)",
+          "max_temperature": "Maximum temperature (°C)",
+          "min_wind_speed": "Minimum wind speed (m/s)",
+          "max_wind_speed": "Maximum wind speed (m/s)",
+          "min_precipitation": "Minimum precipitation (mm/h)",
+          "max_precipitation": "Maximum precipitation (mm/h)",
+          "daily_mode": "Create legacy daily weather entity",
+          "lightning_sensor": "Enable lightning sensor",
+          "lightning_radius": "Lightning search radius (km)",
+          "observation_station_id": "FMI observation station ID (0 to disable)"
+        }
+      }
+    }
+  }
 }

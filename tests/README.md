@@ -101,3 +101,16 @@ rate-limited optional reverse geocoding, and date boundaries for best time.
 The XML fixtures are intentionally synthetic and namespace-shaped, not
 captured FMI API responses. The tests require no network connectivity or
 third-party geocoding service; add a live-HA/FMI smoke test before merge.
+
+## PR7: config entries, options flow and translations
+
+`test_config_flow.py` checks that FMI validation is asynchronous with an
+explicit timeout, errors translate through the Home Assistant `base` form
+error, legacy config-entry identity is preserved, the 14 options retain
+their persisted keys/defaults, `ConfigEntry.runtime_data` is assigned before
+platform setup, and subscription cleanup is owned by Home Assistant. JSON
+translation files are checked for English/Finnish/Russian structural parity.
+
+As with earlier stages, these are offline AST characterization tests and
+do **not** instantiate a real Home Assistant server. Verify add, configure,
+reload, remove and restart workflows manually before merge.

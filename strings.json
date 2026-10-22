@@ -1,40 +1,45 @@
 {
+  "title": "Finnish Meteorological Institute",
   "config": {
     "step": {
       "user": {
-        "description": "FMI Configuration Parameters",
         "title": "Finnish Meteorological Institute",
+        "description": "Configure the FMI weather location.",
         "data": {
-          "name": "[%key:common::config_flow::data::name%]",
-          "latitude": "[%key:common::config_flow::data::latitude%]",
-          "longitude": "[%key:common::config_flow::data::longitude%]"
+          "name": "Name",
+          "latitude": "Latitude",
+          "longitude": "Longitude"
         }
       }
     },
     "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-      "unknown": "[%key:common::config_flow::error::unknown%]"
+      "cannot_connect": "Cannot connect to FMI. Check the location and try again.",
+      "unknown": "Unexpected error while validating FMI location."
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_location%]"
+      "already_configured": "This location is already configured."
     }
   },
   "options": {
     "step": {
       "user": {
-        "title": "FMI Options",
-        "description": "FMI Configuration Parameters",
+        "title": "FMI options",
+        "description": "Weather forecast settings, lightning detection, and best-time conditions.",
         "data": {
-          "offset": "Forecast Interval",
-          "min_relative_humidity": "Min Relative Humidity",
-          "max_relative_humidity": "Max Relative Humidity",
-          "min_temperature": "Min Temperature",
-          "max_temperature": "Max Temperature",
-          "min_wind_speed": "Min Wind Speed",
-          "max_wind_speed": "Max Wind Speed",
-          "min_precipitation": "Min Precipitation",
-          "max_precipitation": "Max Precipitation",
-          "daily_mode": "Daily mode"
+          "forecast_days": "Forecast days",
+          "offset": "Forecast interval (hours)",
+          "min_relative_humidity": "Minimum relative humidity (%)",
+          "max_relative_humidity": "Maximum relative humidity (%)",
+          "min_temperature": "Minimum temperature (°C)",
+          "max_temperature": "Maximum temperature (°C)",
+          "min_wind_speed": "Minimum wind speed (m/s)",
+          "max_wind_speed": "Maximum wind speed (m/s)",
+          "min_precipitation": "Minimum precipitation (mm/h)",
+          "max_precipitation": "Maximum precipitation (mm/h)",
+          "daily_mode": "Create legacy daily weather entity",
+          "lightning_sensor": "Enable lightning sensor",
+          "lightning_radius": "Lightning search radius (km)",
+          "observation_station_id": "FMI observation station ID (0 to disable)"
         }
       }
     }
