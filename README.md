@@ -170,3 +170,7 @@ API responses. The existing fast offline suite remains independent. The
 published v0.8.0 GitHub release and tag are intentionally deferred until
 PR8 has been merged and the production installation has been smoke-tested.
 See [release checklist](RELEASE_CHECKLIST_0.8.0.md).
+
+PR8 replaces the third-party `async_timeout` import with Python's built-in
+`asyncio.timeout` (available since Python 3.11); Home Assistant no longer has
+to install that dependency for FMI to load.

@@ -10,7 +10,6 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/fursov/fmi-hass-custom/issues",
   "requirements": [
-    "async-timeout>=4.0.3",
     "fmi-weather-client==0.7.0",
     "geopy>=2.1.0",
     "python-dateutil>=2.9.0"
