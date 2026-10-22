@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
 import pytest
-from conftest import ROOT, SOURCE_ROOT
+from conftest import SOURCE_ROOT
 
 
 def _module():

@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
-from conftest import ROOT, SOURCE_ROOT, source_definition
+from conftest import SOURCE_ROOT, source_definition
 
 
 class FakeCoordinatorEntity:
