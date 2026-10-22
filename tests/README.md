@@ -57,3 +57,25 @@ validation, stale forecast clearing, optional source isolation, station startup
 failures and source-specific sensor availability. All tests run offline using
 synthetic observations and API stubs; no live FMI queries or Home Assistant
 runtime imports are performed.
+
+## PR4: forecast transformation and subscription checks
+
+The pure `forecast.py` module converts timestamped FMI data into native-unit
+Home Assistant weather forecasts, using HA-configured local time supplied by the
+weather entity. Tests check sorting/deduplication, calendar/year boundaries,
+daylight-saving transitions, finite/missing values, max/min temperatures,
+hourly precipitation totals, and sparse 3-hour samples. The two known PR1
+forecast xfails have been turned into ordinary passing tests.
+
+Forecast totals are sums of available 1-hour accumulations **only when** the
+configured FMI query cadence is hourly. An incomplete day contains an
+incomplete sum, and 2+-hour cadence returns `None` for daily precipitation
+rather than an incorrect full-day estimate.
+
+`weather.*_daily` entity IDs remain unchanged for old installations; each
+forecast method now returns its own correct forecast type. Station observation
+weather entities expose no forecast support. Websocket forecast subscribers
+are notified after coordinator updates.
+
+This suite remains offline; validate the behavior with an installed HA instance
+and a live FMI response before merging.

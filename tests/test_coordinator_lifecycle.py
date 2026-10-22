@@ -66,6 +66,7 @@ class FakeCoordinatorEntity:
 
     def __init__(self, coordinator):
         self.coordinator = coordinator
+        self.hass = SimpleNamespace(async_create_task=lambda coro: coro.close())
         self.writes = 0
         self._unsubscribe = None
 
@@ -211,12 +212,18 @@ def _weather_entity_class():
             "FMIDataUpdateCoordinator": FakeDataUpdateCoordinator,
             "const": const,
             "DeviceEntryType": SimpleNamespace(SERVICE="service"),
+            "WeatherEntityFeature": int,
             "ha_core": SimpleNamespace(callback=lambda function: function),
         },
     )
     Weather.update_callback = lambda self: setattr(
         self, "updates", getattr(self, "updates", 0) + 1
     )
+
+    async def ignore_forecast_updates(self, forecast_types):
+        _ = forecast_types
+
+    Weather.async_update_listeners = ignore_forecast_updates
     return Weather
 
 
@@ -291,3 +298,42 @@ def test_weather_observation_entity_subscribes_through_own_coordinator():
     asyncio.run(observation_entity.async_will_remove_from_hass())
     assert not forecast.listeners
     assert not observation.listeners
+
+
+def test_weather_forecast_subscribers_receive_updates_after_state_change():
+    """Weather forecast subscriptions are distinct from coordinator listeners."""
+    coordinator = FakeDataUpdateCoordinator()
+    coordinator.unique_id = "60.17:24.94"
+    Weather = _weather_entity_class()
+    entity = Weather("Home", coordinator)
+    queued = []
+    pushed = []
+
+    async def capture_forecasts(forecast_types):
+        pushed.append(tuple(forecast_types))
+
+    entity.async_update_listeners = capture_forecasts
+    entity.hass = SimpleNamespace(async_create_task=queued.append)
+    asyncio.run(entity.async_added_to_hass())
+    coordinator._notify()
+    assert entity.writes == 1
+    assert len(queued) == 1
+    assert pushed == []
+    asyncio.run(queued.pop())
+    assert pushed == [("hourly", "daily")]
+    asyncio.run(entity.async_will_remove_from_hass())
+
+
+def test_observation_weather_does_not_advertise_or_push_forecasts():
+    coordinator = FakeDataUpdateCoordinator()
+    coordinator.unique_id = "60.17:24.94_observation"
+    Weather = _weather_entity_class()
+    entity = Weather("Home", coordinator, station_id=True)
+    queued = []
+    entity.hass = SimpleNamespace(async_create_task=queued.append)
+    assert entity._attr_supported_features == 0
+    asyncio.run(entity.async_added_to_hass())
+    coordinator._notify()
+    assert entity.writes == 1
+    assert queued == []
+    asyncio.run(entity.async_will_remove_from_hass())
