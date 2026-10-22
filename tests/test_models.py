@@ -4,7 +4,6 @@ from datetime import datetime
 from xml.etree import ElementTree
 
 import pytest
-
 from conftest import ROOT, source_definition
 
 

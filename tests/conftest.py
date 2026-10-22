@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -48,7 +47,8 @@ def source_definition(filename, name, namespace=None, methods=None, base=None):
 
     module = ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[]))
     scope = dict(namespace or {})
-    exec(compile(module, str(ROOT / filename), "exec"), scope)
+    # Only definitions read from this checked-out repository are executed.
+    exec(compile(module, str(ROOT / filename), "exec"), scope)  # noqa: S102
     return scope[name]
 
 

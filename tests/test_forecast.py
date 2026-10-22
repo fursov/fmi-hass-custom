@@ -2,13 +2,11 @@
 
 import asyncio
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import source_definition
-
 
 FORECAST_KEYS = {
     "ATTR_FORECAST_TIME": "datetime",
@@ -47,7 +45,7 @@ def _entity(payload, *, daily_mode=False):
     scope = {
         "Forecast": dict,
         "math": math,
-        "tz": SimpleNamespace(tzlocal=lambda: timezone.utc),
+        "tz": SimpleNamespace(tzlocal=lambda: UTC),
         "utils": utils,
         **FORECAST_KEYS,
     }

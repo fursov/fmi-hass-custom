@@ -5,7 +5,6 @@ import logging
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import ROOT, source_definition
 
 
