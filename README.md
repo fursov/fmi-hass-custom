@@ -160,3 +160,13 @@ The version remains `0.6.2` until the release PR.
 The minimal supported Home Assistant version is not declared in this PR:
 while current APIs are targeted, an end-to-end runtime test and version
 compatibility matrix remain part of PR8.
+
+## Release candidate: v0.8.0 (PR8)
+
+After v0.7.2, the proposed next release is **v0.8.0**. PR8 introduces
+blocking integration tests running the real Home Assistant config-entry,
+sensor, weather, registry and service lifecycle against locally mocked FMI
+API responses. The existing fast offline suite remains independent. The
+published v0.8.0 GitHub release and tag are intentionally deferred until
+PR8 has been merged and the production installation has been smoke-tested.
+See [release checklist](RELEASE_CHECKLIST_0.8.0.md).

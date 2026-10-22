@@ -114,3 +114,24 @@ translation files are checked for English/Finnish/Russian structural parity.
 As with earlier stages, these are offline AST characterization tests and
 do **not** instantiate a real Home Assistant server. Verify add, configure,
 reload, remove and restart workflows manually before merge.
+
+## PR8: real Home Assistant runtime tests
+
+The previous `tests/` suite remains fast, offline and AST-based. PR8 adds a
+**separate**, blocking Home Assistant integration job with actual `hass`,
+`MockConfigEntry`, entity registry, weather actions and config/option flows.
+
+To run it, use Python 3.14 and install `requirements-ha-test.txt`. Then:
+
+```bash
+bash .github/scripts/run-ha-tests.sh
+```
+
+The runner copies this repository's *root-layout* production integration to a
+temporary `custom_components/fmi` installation. It does not modify the HACS
+layout or import the repository root as a package. Only FMI API/geocoding
+calls are mocked; Home Assistant lifecycle, registries and services are real.
+
+The HA test dependency is pinned to a known plugin build for reproducible CI.
+Check the installed Home Assistant version in the job log; this does not yet
+establish support for *all* HA releases or prove live FMI XML compatibility.
