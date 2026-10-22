@@ -79,3 +79,14 @@ are notified after coordinator updates.
 
 This suite remains offline; validate the behavior with an installed HA instance
 and a live FMI response before merging.
+
+## PR5: native sensor entities
+
+The sensor platform now subclasses `SensorEntity` and publishes values through
+`native_value` and `native_unit_of_measurement`. Entity descriptions declare
+sensor types and native units while preserving legacy names and identifiers.
+Offline tests cover all unique IDs, metadata, missing and nonfinite values,
+text states, source availability and source-specific statistics.
+
+These AST-isolated tests do not boot Home Assistant. Check the HA entity
+registry and dashboards after upgrading, particularly native unit conversion.
