@@ -134,6 +134,16 @@ class _BaseSensorClass(CoordinatorEntity):
 class FMIBestConditionSensor(_BaseSensorClass):
     """Implementation of a FMI Weather sensor with best conditions of the day."""
 
+    @property
+    def available(self):
+        """A missing optional forecast must not expose old forecast sensor values."""
+        if not super().available:
+            return False
+        if self.type in (SensorType.PLACE, SensorType.TIME):
+            return True
+        return (self.coordinator.time_step == 1
+                or bool(self.coordinator.get_forecasts()))
+
     def __init__(self, name, coordinator, sensor_type, sensor_data):
         """Initialize the sensor."""
         self.update_state_func = {
@@ -254,8 +264,8 @@ class FMIBestConditionSensor(_BaseSensorClass):
         source_data = None
 
         # Update the sensor states
-        if _fmi.time_step == 1:
-            # Current weather
+        if _fmi.time_step == 1 or self.type == SensorType.TIME:
+            # The place and best-time values use the current weather snapshot.
             source_data = weather.data
         else:
             # Forecasted weather based on configured time_step - next forecasted hour, if available
@@ -263,6 +273,7 @@ class FMIBestConditionSensor(_BaseSensorClass):
             _forecasts = _fmi.get_forecasts()
 
             if not _forecasts:
+                self._attr_state = ha_const.STATE_UNAVAILABLE
                 self.logger.debug("FMI: Sensor _FMI Hourly Forecast is unavailable")
                 return
 
@@ -285,6 +296,12 @@ class FMIBestConditionSensor(_BaseSensorClass):
 class FMILightningStrikesSensor(_BaseSensorClass):
     """Implementation of a FMI Lightning strikes sensor."""
 
+    @property
+    def available(self):
+        """No strikes is a valid result; a failed query is not."""
+        return (super().available
+                and self.coordinator.lightning_data is not None)
+
     def update(self):
         """Update the state of the lightning sensor."""
 
@@ -293,8 +310,13 @@ class FMILightningStrikesSensor(_BaseSensorClass):
         _fmi: FMIDataUpdateCoordinator = self.coordinator
         _data = _fmi.lightning_data
 
+        if _data is None:
+            self._attr_state = ha_const.STATE_UNAVAILABLE
+            self._attr_extra_state_attributes = {}
+            return
         if not _data:
-            self.logger.debug("FMI: Sensor lightning is unavailable")
+            self._attr_state = ha_const.STATE_UNKNOWN
+            self._attr_extra_state_attributes = {}
             return
 
         self._attr_state = _data[0].location
@@ -327,6 +349,13 @@ class FMILightningStrikesSensor(_BaseSensorClass):
 class FMIMareoSensor(_BaseSensorClass):
     """Implementation of a FMI sea water level sensor."""
 
+    @property
+    def available(self):
+        """Sea-level failures never expose the last successful sea-level value."""
+        mareo = self.coordinator.mareo_data
+        return (super().available
+                and mareo is not None and bool(mareo.size()))
+
     def update(self):
         """Update the state of the mareo sensor."""
 
@@ -336,6 +365,8 @@ class FMIMareoSensor(_BaseSensorClass):
         mareo = _fmi.mareo_data
 
         if not mareo or not mareo.size():
+            self._attr_state = ha_const.STATE_UNAVAILABLE
+            self._attr_extra_state_attributes = {}
             self.logger.debug("FMI: Sensor mareo is unavailable")
             return
 

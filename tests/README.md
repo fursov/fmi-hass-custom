@@ -49,3 +49,11 @@ checks observation/forecast coordinator isolation and failure behavior.
 
 These tests use a small stand-in for Home Assistant's coordinator/entity
 lifecycle and do **not** replace full Home Assistant integration tests.
+
+## PR3: partial failures, freshness and recovery
+
+`test_partial_failures.py` characterizes current-weather/observation age
+validation, stale forecast clearing, optional source isolation, station startup
+failures and source-specific sensor availability. All tests run offline using
+synthetic observations and API stubs; no live FMI queries or Home Assistant
+runtime imports are performed.

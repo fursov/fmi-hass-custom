@@ -8,6 +8,7 @@ CoordinatorEntity subscription lifecycle and coordinator refresh contract.
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -99,13 +100,21 @@ def _data_coordinator_class(name="FMIDataUpdateCoordinator"):
     return source_definition(
         "__init__.py",
         name,
-        methods=["_async_update_data"],
+        methods=["_async_update_data", "_refresh_optional_source"],
         base="DataUpdateCoordinator",
         namespace={
             "DataUpdateCoordinator": FakeDataUpdateCoordinator,
             "UpdateFailed": FakeUpdateFailed,
             "timeout": noop_timeout,
-            "const": SimpleNamespace(TIMEOUT_FMI_INTEG_IN_SEC=40),
+            "const": SimpleNamespace(
+                TIMEOUT_FMI_INTEG_IN_SEC=40,
+                TIMEOUT_OPTIONAL_SOURCE_IN_SEC=40,
+                CURRENT_MAX_AGE=timedelta(hours=3),
+                OBSERVATION_MAX_AGE=timedelta(hours=2),
+                BEST_CONDITION_NOT_AVAIL="not_available",
+            ),
+            "is_fresh_weather": lambda weather, *_args, **_kwargs: weather is not None,
+            "timedelta": timedelta,
         },
     )
 
@@ -156,7 +165,7 @@ def test_failed_forecast_refresh_never_publishes_empty_data():
     events = []
     coordinator.async_add_listener(lambda: events.append("published"))
 
-    with pytest.raises(FakeUpdateFailed, match="Unable to fetch"):
+    with pytest.raises(FakeUpdateFailed, match="missing or stale"):
         asyncio.run(coordinator.async_refresh())
 
     assert events == []

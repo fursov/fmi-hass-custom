@@ -3,7 +3,7 @@
 import typing
 import time
 import xml.etree.ElementTree as ET
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import fmi_weather_client as fmi
 import fmi_weather_client.models as fmi_models
@@ -35,6 +35,37 @@ def base_unique_id(latitude, longitude):
     return f"{latitude}_{longitude}"
 
 
+def is_fresh_weather(weather, max_age, max_future=timedelta(hours=2), now=None):
+    """Reject missing, naive or outdated FMI measurements.
+
+    FMI supplies timezone-aware timestamps. Future forecast estimates are
+    allowed a small tolerance, but old responses are not reported as fresh.
+    """
+    timestamp = getattr(getattr(weather, "data", None), "time", None)
+    if not isinstance(timestamp, datetime) or timestamp.tzinfo is None:
+        return False
+    if timestamp.utcoffset() is None:
+        return False
+    if now is None:
+        now = datetime.now(timezone.utc)
+    age = now - timestamp.astimezone(timezone.utc)
+    return -max_future <= age <= max_age
+
+
+def has_future_forecast(forecast, now=None):
+    """Check for at least one valid future forecast slot."""
+    if now is None:
+        now = datetime.now(timezone.utc)
+    for point in getattr(forecast, "forecasts", ()) or ():
+        timestamp = getattr(point, "time", None)
+        if (isinstance(timestamp, datetime)
+                and timestamp.tzinfo is not None
+                and timestamp.utcoffset() is not None
+                and timestamp.astimezone(timezone.utc) > now):
+            return True
+    return False
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up configured FMI."""
     _ = config
@@ -57,11 +88,18 @@ async def async_setup_entry(hass, config_entry) -> bool:
     try:
         coordinator_observation = FMIObservationUpdateCoordinator(
             hass, websession, config_entry)
-        await coordinator_observation.async_config_entry_first_refresh()
-        if not coordinator_observation.last_update_success:
-            raise ConfigEntryNotReady
     except AttributeError:
+        # A station is not configured; only the forecast coordinator is needed.
         coordinator_observation = None
+    if coordinator_observation is not None:
+        try:
+            await coordinator_observation.async_config_entry_first_refresh()
+        except ConfigEntryNotReady:
+            # Keep the station coordinator registered. Its entity is unavailable
+            # until the next successful station poll, without blocking setup.
+            LOGGER.warning(
+                "FMI observation station is unavailable; continuing with forecast"
+            )
 
     undo_listener = config_entry.add_update_listener(update_listener)
 
@@ -229,7 +267,7 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
 
     def get_forecasts(self) -> typing.List[fmi_models.WeatherData]:
         """Return the current forecast data."""
-        if self.forecast is None:
+        if self.forecast is None or not has_future_forecast(self.forecast):
             return []
         return self.forecast.forecasts
 
@@ -367,6 +405,7 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
 
         # Fetch data
         response = requests.get(base_url, timeout=const.TIMEOUT_LIGHTNING_PULL_IN_SECS)
+        response.raise_for_status()
         return ET.fromstring(response.content)
 
     def __update_lightning_strikes(self):
@@ -415,8 +454,8 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
                                     strikes=v[4], peak_current=v[5], cloud_cover=v[6],
                                     ellipse_major=v[7])
             op_tuples.append(op)
-        self.lightning_data = op_tuples
         self.logger.debug("FMI: Lightning ended")
+        return op_tuples
 
     # Update mareo data
     def __update_mareo_data(self):
@@ -434,10 +473,11 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
 
         # Fetch data
         response_mareo = requests.get(base_mareo_url, timeout=const.TIMEOUT_MAREO_PULL_IN_SECS)
+        response_mareo.raise_for_status()
 
         root_mareo: list = ET.fromstring(response_mareo.content)
 
-        self.mareo_data = mareo_data = FMIMareoStruct()
+        mareo_data = FMIMareoStruct()
 
         # for n in range(len(root_mareo)):
         for index, mareo in enumerate(root_mareo):
@@ -458,6 +498,7 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
             self.logger.debug("FMI: Mareo data updated")
         else:
             self.logger.debug("FMI: Mareo data not updated. No data available")
+        return mareo_data if mareo_data.size() else None
 
     async def _fetch_forecast_weather(self):
         """Fetch current weather data based on estimation (forecast)."""
@@ -469,48 +510,81 @@ class FMIDataUpdateCoordinator(DataUpdateCoordinator):
         return data
 
     async def _fetch_forecast(self):
-        """Fetch current forecast data."""
+        """Refresh optional forecast without retaining an outdated snapshot."""
         if not self.forecast_points:
+            self.forecast = None
             return
         try:
-            self.forecast = await fmi.async_forecast_by_coordinates(
-                self.latitude, self.longitude, self.time_step, self.forecast_points)
-        except (fmi_erros.ClientError, fmi_erros.ServerError) as error:
-            self.logger.error("FMI: unable to fetch forecast data! error %s", error)
+            async with timeout(const.TIMEOUT_OPTIONAL_FORECAST_IN_SEC):
+                forecast = await fmi.async_forecast_by_coordinates(
+                    self.latitude, self.longitude, self.time_step,
+                    self.forecast_points)
+        except (fmi_erros.ClientError, fmi_erros.ServerError, TimeoutError) as error:
+            self.logger.warning("FMI forecast is unavailable: %s", error)
+            self.forecast = None
+            return
+        except Exception:  # noqa: BLE001
+            self.logger.exception("FMI forecast request failed unexpectedly")
+            self.forecast = None
+            return
+
+        if not has_future_forecast(forecast):
+            self.logger.warning("FMI forecast contains no future data")
+            self.forecast = None
+            return
+        self.forecast = forecast
+
+    async def _refresh_optional_source(self, func, name):
+        """Run blocking optional source code, isolating errors and timeouts.
+
+        Workers return data rather than changing attributes; a timed-out
+        executor thread cannot overwrite a newer refresh after cancellation.
+        """
+        try:
+            async with timeout(const.TIMEOUT_OPTIONAL_SOURCE_IN_SEC):
+                return await self._hass.async_add_executor_job(func)
+        except Exception:  # noqa: BLE001
+            self.logger.exception("FMI optional source %s is unavailable", name)
+            return None
 
     async def _async_update_data(self):
-        """Update data via Open API."""
-
-        # do actual data fetching
+        """Update core weather first; degrade independent sources separately."""
         try:
             async with timeout(const.TIMEOUT_FMI_INTEG_IN_SEC):
-                self.logger.debug("FMI: fetch latest forecast data")
                 weather_data = await self._fetch_forecast_weather()
-                if not weather_data:
-                    # Weather is always needed!
-                    raise UpdateFailed("FMI: Unable to fetch observation or forecast data!")
-                self.current = weather_data
-
-                await self._fetch_forecast()
-
-                # Update best time parameters
-                await self._hass.async_add_executor_job(self.__update_best_weather_condition)
-                self.logger.debug("FMI: Best Conditions updated")
-
-                # Update lightning strikes
-                if self.lightning_mode and self.lightning_radius:
-                    await self._hass.async_add_executor_job(self.__update_lightning_strikes)
-                    self.logger.debug("FMI: Lightning Conditions updated")
-
-                # Update mareograph data on sea level
-                await self._hass.async_add_executor_job(self.__update_mareo_data)
-                self.logger.debug("FMI: Mareograph sea level data updated")
-
+                if not is_fresh_weather(weather_data, const.CURRENT_MAX_AGE):
+                    raise UpdateFailed("FMI current weather is missing or stale")
         except (TimeoutError, UpdateFailed) as error:
+            # CoordinatorEntity marks core weather/sensors unavailable on failure.
             raise UpdateFailed(error) from error
 
-        # Returning data lets DataUpdateCoordinator publish one completed refresh.
-        # Do not notify listeners manually from inside _async_update_data().
+        self.current = weather_data
+        await self._fetch_forecast()
+
+        try:
+            await self._hass.async_add_executor_job(
+                self.__update_best_weather_condition
+            )
+        except Exception:  # noqa: BLE001
+            self.logger.exception("FMI best-time calculation failed")
+            self.best_time = None
+            self.best_temperature = None
+            self.best_humidity = None
+            self.best_wind_speed = None
+            self.best_precipitation = None
+            self.best_state = const.BEST_CONDITION_NOT_AVAIL
+
+        # Optional failures must not make the current-weather entity unavailable.
+        if self.lightning_mode and self.lightning_radius:
+            self.lightning_data = await self._refresh_optional_source(
+                self.__update_lightning_strikes, "lightning"
+            )
+        else:
+            self.lightning_data = None
+        self.mareo_data = await self._refresh_optional_source(
+            self.__update_mareo_data, "sea level"
+        )
+
         return {"current": self.current}
 
 
@@ -534,11 +608,14 @@ class FMIObservationUpdateCoordinator(FMIDataUpdateCoordinator):
         if not self.observation_station_id:
             return None
         try:
-            self.observation = await fmi.async_observation_by_station_id(
+            observation = await fmi.async_observation_by_station_id(
                 self.observation_station_id)
-        except (fmi_erros.ClientError, fmi_erros.ServerError) as error:
-            self.logger.error("FMI: unable to fetch observation data from station %d! error %s",
-                              self.observation_station_id, error)
+        except Exception as error:  # noqa: BLE001
+            self.observation = None
+            raise UpdateFailed(
+                f"FMI observation station {self.observation_station_id} failed"
+            ) from error
+        self.observation = observation
 
     async def _async_update_data(self):
         """Update observation data via Open API."""
@@ -547,6 +624,12 @@ class FMIObservationUpdateCoordinator(FMIDataUpdateCoordinator):
         try:
             async with timeout(const.TIMEOUT_FMI_INTEG_IN_SEC):
                 await self._fetch_observation()
+                if not is_fresh_weather(
+                    self.observation, const.OBSERVATION_MAX_AGE,
+                    max_future=timedelta(minutes=15)
+                ):
+                    raise UpdateFailed("FMI observation is missing or stale")
         except (TimeoutError, UpdateFailed) as error:
+            self.observation = None
             raise UpdateFailed(error) from error
         return {"observation": self.observation}
