@@ -379,7 +379,7 @@ def test_manifest_tracks_owned_docs_and_direct_dependencies():
         "https://github.com/fursov/fmi-hass-custom"
     )
     assert "@fursov" in manifest["codeowners"]
-    assert "fmi-weather-client==0.7.0" in manifest["requirements"]
+    assert "fmi-weather-client==1.0.0" in manifest["requirements"]
     assert not any(item.startswith("requests") for item in manifest["requirements"])
 
 

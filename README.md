@@ -190,3 +190,16 @@ including PR9 is available. Manual installations should copy only the new
 
 No new release or tag is created by PR9. The published v0.8.0 tag continues
 to represent the previously released root-layout source.
+
+## fmi-weather-client 1.0.0 upgrade candidate (PR10)
+
+The integration now pins `fmi-weather-client==1.0.0` in its manifest
+and CI requirements instead of 0.7.0. The Python package is versioned
+independently from this Home Assistant integration; the integration's
+manifest `version` is intentionally unchanged until its next release.
+
+The PR adds an import/signature/data-model contract check for the **real**
+installed package and a Home Assistant test that uses actual client
+`Weather`, `Forecast`, `WeatherData` and `Value` objects rather than
+only stand-ins. FMI network requests remain mocked. Test with a real FMI
+forecast and observation station before publishing a HACS release.

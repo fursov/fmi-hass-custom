@@ -141,3 +141,16 @@ directory and absence of stale root-level production copies. Existing AST
 tests read code through `SOURCE_ROOT` and use `ROOT` for fixture paths.
 The HA job copies the checked-in `custom_components/fmi` directory unchanged,
 and Hassfest validates that exact directory.
+
+## PR10: installed FMI client 1.0.0 compatibility
+
+In addition to the original offline tests and HA integration lifecycle tests,
+`integration_tests/test_client_api.py` imports the **installed** exact
+version of `fmi-weather-client`, verifies exports and coroutine signatures
+used by the coordinator and config flow, checks model fields and constructs
+real client models for native HA sensor updates.
+
+This protects against API incompatibility that mocks alone could hide. It
+does not test connectivity, FMI WFS service availability, or parsing current
+live FMI XML. Smoke-test real Finnish forecasts and station observations
+before merging or releasing an integration version containing this change.
