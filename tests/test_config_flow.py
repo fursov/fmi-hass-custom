@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from conftest import ROOT, SOURCE_ROOT, source_definition
+from conftest import SOURCE_ROOT, source_definition
 
 
 class FMIClientError(Exception):
