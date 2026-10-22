@@ -23,8 +23,7 @@ What is pinned:
 **Important:** `tests/fixtures/forecast.json` represents parsed client data, not
 a recorded FMI API response. Never use it to assert actual API availability.
 
-Two known forecast defects are marked `xfail(strict=True)` rather than asserted
-as correct behavior. PR4 should fix them and remove the markers.
+PR4 resolved both original forecast xfails. The suite now expects them to pass.
 
 Limitations: AST-isolated tests do not exercise HA lifecycle, registry,
 `ConfigFlow`, actual WFS parsing or coordinator scheduling. PR2/PR3 must add
@@ -90,3 +89,15 @@ text states, source availability and source-specific statistics.
 
 These AST-isolated tests do not boot Home Assistant. Check the HA entity
 registry and dashboards after upgrading, particularly native unit conversion.
+
+## PR6: offline WFS and reverse-geocoding tests
+
+`test_wfs.py` covers UTC request time generation, conversion to local HA
+wall-clock strings across DST, WFS error reports, namespace-independent XML
+parsing of FMI lightning coverage and simple SeaLevel elements, malformed
+and missing fields, bounded parse deadlines, sorting/selection, cached and
+rate-limited optional reverse geocoding, and date boundaries for best time.
+
+The XML fixtures are intentionally synthetic and namespace-shaped, not
+captured FMI API responses. The tests require no network connectivity or
+third-party geocoding service; add a live-HA/FMI smoke test before merge.

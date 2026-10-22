@@ -1,15 +1,27 @@
 """Stable value/serialization behavior of the current small data structures."""
 
 from datetime import datetime
+from types import SimpleNamespace
 from xml.etree import ElementTree
 
 import pytest
 from conftest import ROOT, source_definition
 
 
+def _model_namespace():
+    """Keep legacy naive clock strings; aware UTC conversion is tested in WFS."""
+    return {
+        "datetime": datetime,
+        "dt_util": SimpleNamespace(as_local=lambda stamp: stamp),
+        "local_display_time": lambda value, _to_local: datetime.fromisoformat(
+            value
+        ).strftime("%Y-%m-%d %H:%M"),
+    }
+
+
 def test_sea_level_model_preserves_order_and_converts_numeric_values():
     Mareo = source_definition(
-        "__init__.py", "FMIMareoStruct", namespace={"datetime": datetime}
+        "__init__.py", "FMIMareoStruct", namespace=_model_namespace()
     )
     record = Mareo()
     record.append_values("2026-01-01T00:00:00", "12.5")
@@ -21,7 +33,7 @@ def test_sea_level_model_preserves_order_and_converts_numeric_values():
 
 def test_lightning_model_preserves_public_attributes():
     Lightning = source_definition(
-        "__init__.py", "FMILightningStruct", namespace={"datetime": datetime}
+        "__init__.py", "FMILightningStruct", namespace=_model_namespace()
     )
     strike = Lightning("2026-01-01 12:34:00", "Helsinki", 1.235, 2, 3.2, 0.1, 5.1)
     assert strike.location == "Helsinki"
